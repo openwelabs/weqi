@@ -57,6 +57,7 @@ void NewGamePage::setupUi()
     m_opponentCombo = new QComboBox(card);
     m_opponentCombo->addItem(QStringLiteral("真人（本地双人）"), static_cast<int>(GameMode::HumanVsHuman));
     m_opponentCombo->addItem(QStringLiteral("AI 对手"), static_cast<int>(GameMode::HumanVsAI));
+    m_opponentCombo->addItem(QStringLiteral("AI vs AI"), static_cast<int>(GameMode::AIVsAI));
     m_opponentCombo->setStyleSheet(UiTheme::comboStyle());
     layout->addWidget(m_opponentCombo);
 
@@ -114,6 +115,12 @@ void NewGamePage::startGame()
     if (mode == GameMode::HumanVsAI) {
         // 进入 AI 对手选择页
         m_window->showAIOpponent();
+        return;
+    }
+
+    if (mode == GameMode::AIVsAI) {
+        // 进入 AI vs AI 设置页
+        m_window->showAIVsAI();
         return;
     }
 

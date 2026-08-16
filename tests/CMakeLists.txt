@@ -21,9 +21,19 @@ qt_add_executable(test_movement
     ../src/GameController.h
     ../src/ChessPiece.cpp
     ../src/ChessPiece.h
+    ../src/data/AIProviderManager.cpp
+    ../src/data/AIProviderManager.h
+    ../src/data/DataPaths.cpp
+    ../src/data/DataPaths.h
+    ../src/ai/AIManager.cpp
+    ../src/ai/AIManager.h
 )
 
-target_include_directories(test_movement PRIVATE ../src)
+target_include_directories(test_movement PRIVATE
+    ../src
+    ../src/data
+    ../src/ai
+)
 target_link_libraries(test_movement PRIVATE Qt6::Widgets Qt6::Test)
 
 enable_testing()

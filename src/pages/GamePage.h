@@ -9,10 +9,12 @@ class QLabel;
 class QListWidget;
 class QPushButton;
 class QWidget;
+class QTimer;
 class ChessBoard;
 
 // 对局页面：棋盘 + 右侧信息区 + 升变/结算覆盖层。
 // 负责对局进行、悔棋、新游戏、对局保存与 Continue Game。
+// 支持 AI 对局：显示 AI 思考状态、AI 名称/模型、取消按钮。
 class GamePage : public Page
 {
     Q_OBJECT
@@ -40,6 +42,7 @@ private:
     QWidget *createActionButtons();
     QWidget *createPromotionOverlay();
     QWidget *createSettlementOverlay();
+    QWidget *createAIThinkingPanel();
 
     // 信号槽
     void onMoveMade(int fromRow, int fromCol, int toRow, int toCol);
@@ -50,6 +53,13 @@ private:
     void onNewGameClicked();
     void onPromotionChosen(PieceType type);
     void onViewGameClicked();
+
+    // AI 相关
+    void onAIThinkingChanged(bool thinking, const QString &name, const QString &model);
+    void onAIRequestFailed(const QString &error);
+    void onCancelAIClicked();
+    void onRetryAIClicked();
+    void onAICancelClicked();
 
     // 更新信息面板
     void updateInfoPanel();
@@ -79,6 +89,19 @@ private:
 
     // 棋谱面板
     QListWidget *m_moveList = nullptr;
+
+    // AI 思考面板
+    QWidget *m_aiThinkingPanel = nullptr;
+    QLabel *m_aiThinkingLabel = nullptr;
+    QLabel *m_aiThinkingModelLabel = nullptr;
+    QPushButton *m_cancelAIButton = nullptr;
+    QTimer *m_aiThinkingAnimTimer = nullptr;
+    int m_aiThinkingDotCount = 0;
+
+    // AI 失败对话框（用于重试/取消）
+    QWidget *m_aiErrorOverlay = nullptr;
+    QLabel *m_aiErrorLabel = nullptr;
+    QString m_lastAIError;
 
     // 升变覆盖层
     QWidget *m_promotionOverlay = nullptr;

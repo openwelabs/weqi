@@ -8,6 +8,7 @@
 #include "HomePage.h"
 #include "NewGamePage.h"
 #include "AIOpponentPage.h"
+#include "AIVsAIPage.h"
 #include "GamePage.h"
 #include "HistoryPage.h"
 #include "SettingsPage.h"
@@ -17,6 +18,7 @@
 #include "AIProviderManager.h"
 #include "GameHistoryManager.h"
 #include "StatsManager.h"
+#include "AIManager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -46,6 +48,10 @@ void MainWindow::setupManagers()
 
     // 棋局控制器
     m_controller = new GameController(this);
+
+    // AI 管理器（异步 QProcess 通信）
+    m_aiManager = new AIManager(this);
+    m_controller->setAIManager(m_aiManager);
 }
 
 void MainWindow::setupPages()
@@ -68,6 +74,7 @@ void MainWindow::setupPages()
     m_homePage = new HomePage(this, m_stack);
     m_newGamePage = new NewGamePage(this, m_stack);
     m_aiOpponentPage = new AIOpponentPage(this, m_stack);
+    m_aiVsAiPage = new AIVsAIPage(this, m_stack);
     m_gamePage = new GamePage(this, m_stack);
     m_historyPage = new HistoryPage(this, m_stack);
     m_settingsPage = new SettingsPage(this, m_stack);
@@ -75,7 +82,7 @@ void MainWindow::setupPages()
 
     // 让所有页面自动填充深色背景
     const QList<Page *> pages = {
-        m_homePage, m_newGamePage, m_aiOpponentPage,
+        m_homePage, m_newGamePage, m_aiOpponentPage, m_aiVsAiPage,
         m_gamePage, m_historyPage, m_settingsPage, m_aboutPage
     };
     for (Page *p : pages)
@@ -84,6 +91,7 @@ void MainWindow::setupPages()
     m_stack->addWidget(m_homePage);
     m_stack->addWidget(m_newGamePage);
     m_stack->addWidget(m_aiOpponentPage);
+    m_stack->addWidget(m_aiVsAiPage);
     m_stack->addWidget(m_gamePage);
     m_stack->addWidget(m_historyPage);
     m_stack->addWidget(m_settingsPage);
@@ -125,6 +133,11 @@ void MainWindow::showAIOpponent()
     navigateTo(m_aiOpponentPage);
 }
 
+void MainWindow::showAIVsAI()
+{
+    navigateTo(m_aiVsAiPage);
+}
+
 void MainWindow::showGame()
 {
     navigateTo(m_gamePage);
@@ -150,6 +163,32 @@ void MainWindow::showAbout()
 void MainWindow::startGame(GameMode mode, const QString &opponent,
                            const QString &whiteName, const QString &blackName)
 {
+    // 非 AI 对局：清除 AI 配置
+    m_controller->setAIGame(false, false, AIProvider(), AIProvider());
+    m_gamePage->startNewGame(mode, opponent, whiteName, blackName);
+    navigateTo(m_gamePage);
+}
+
+void MainWindow::startAIGame(GameMode mode, const QString &opponent,
+                             const QString &whiteName, const QString &blackName,
+                             bool whiteIsAI, bool blackIsAI,
+                             const QString &whiteProviderId, const QString &blackProviderId)
+{
+    // 解析 Provider
+    AIProvider whiteProvider;
+    AIProvider blackProvider;
+    if (whiteIsAI) {
+        const AIProvider *p = m_aiProviders->providerById(whiteProviderId);
+        if (p)
+            whiteProvider = *p;
+    }
+    if (blackIsAI) {
+        const AIProvider *p = m_aiProviders->providerById(blackProviderId);
+        if (p)
+            blackProvider = *p;
+    }
+
+    m_controller->setAIGame(whiteIsAI, blackIsAI, whiteProvider, blackProvider);
     m_gamePage->startNewGame(mode, opponent, whiteName, blackName);
     navigateTo(m_gamePage);
 }

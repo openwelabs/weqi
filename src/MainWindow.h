@@ -12,6 +12,7 @@ class Page;
 class HomePage;
 class NewGamePage;
 class AIOpponentPage;
+class AIVsAIPage;
 class GamePage;
 class HistoryPage;
 class SettingsPage;
@@ -22,6 +23,7 @@ class SettingsManager;
 class AIProviderManager;
 class GameHistoryManager;
 class StatsManager;
+class AIManager;
 
 // 主窗口：应用外壳。
 // 持有所有数据管理器与页面，通过 QStackedWidget 管理页面导航。
@@ -39,11 +41,13 @@ public:
     GameHistoryManager *history() const { return m_history; }
     StatsManager *stats() const { return m_stats; }
     GameController *controller() const { return m_controller; }
+    AIManager *aiManager() const { return m_aiManager; }
 
     // ---- 页面导航 ----
     void showHome();
     void showNewGame();
     void showAIOpponent();
+    void showAIVsAI();
     void showGame();
     void showHistory();
     void showSettings();
@@ -52,6 +56,14 @@ public:
     // 启动一局新游戏（由 NewGamePage / AIOpponentPage 调用）
     void startGame(GameMode mode, const QString &opponent, const QString &whiteName,
                    const QString &blackName);
+
+    // 启动一局 AI 对局（Human vs AI 或 AI vs AI）
+    // whiteIsAI / blackIsAI: 该方是否为 AI
+    // whiteProviderId / blackProviderId: 对应 AI 的 Provider ID（仅当该方为 AI 时有效）
+    void startAIGame(GameMode mode, const QString &opponent,
+                     const QString &whiteName, const QString &blackName,
+                     bool whiteIsAI, bool blackIsAI,
+                     const QString &whiteProviderId, const QString &blackProviderId);
 
     // 继续未完成对局
     void continueGame();
@@ -67,6 +79,7 @@ private:
     AIProviderManager *m_aiProviders = nullptr;
     GameHistoryManager *m_history = nullptr;
     StatsManager *m_stats = nullptr;
+    AIManager *m_aiManager = nullptr;
 
     // 棋局控制器（GamePage 使用）
     GameController *m_controller = nullptr;
@@ -76,6 +89,7 @@ private:
     HomePage *m_homePage = nullptr;
     NewGamePage *m_newGamePage = nullptr;
     AIOpponentPage *m_aiOpponentPage = nullptr;
+    AIVsAIPage *m_aiVsAiPage = nullptr;
     GamePage *m_gamePage = nullptr;
     HistoryPage *m_historyPage = nullptr;
     SettingsPage *m_settingsPage = nullptr;

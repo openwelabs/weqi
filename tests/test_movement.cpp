@@ -40,6 +40,7 @@ private slots:
 
     // 功能
     void fullGameFlow();
+    void resolveSanMove();
 };
 
 // 白兵从起始位置（row 6）可前进两格到 row 4
@@ -450,6 +451,44 @@ void TestMovement::fullGameFlow()
     c.newGame();
     QCOMPARE(c.history().count(), 0);
     QCOMPARE(c.currentTurn(), PieceColor::White);
+}
+
+// AI 返回短代数记法（SAN）时，应能解析为合法走法
+void TestMovement::resolveSanMove()
+{
+    GameController c;
+
+    // 初始局面：白方 e4（兵 e2-e4）
+    Move m = c.resolveMoveFromSan(QStringLiteral("e4"));
+    QVERIFY(m.isValid());
+    QCOMPARE(m.fromRow, 6);
+    QCOMPARE(m.fromCol, 4);
+    QCOMPARE(m.toRow, 4);
+    QCOMPARE(m.toCol, 4);
+
+    // 带将军符号
+    m = c.resolveMoveFromSan(QStringLiteral("e4+"));
+    QVERIFY(m.isValid());
+
+    // 走一步后，黑方 e5
+    QVERIFY(c.tryMove(6, 4, 4, 4)); // e4
+    m = c.resolveMoveFromSan(QStringLiteral("e5"));
+    QVERIFY(m.isValid());
+    QCOMPARE(m.fromRow, 1);
+    QCOMPARE(m.fromCol, 4);
+
+    // 走两步后，白方 Nf3
+    QVERIFY(c.tryMove(1, 4, 3, 4)); // e5
+    m = c.resolveMoveFromSan(QStringLiteral("Nf3"));
+    QVERIFY(m.isValid());
+    QCOMPARE(m.fromRow, 7);
+    QCOMPARE(m.fromCol, 6);
+    QCOMPARE(m.toRow, 5);
+    QCOMPARE(m.toCol, 5);
+
+    // 此时轮到黑方。黑方 e4 非法（黑兵只能前进一格/两格到 e6/e5）
+    m = c.resolveMoveFromSan(QStringLiteral("e4"));
+    QVERIFY(!m.isValid());
 }
 
 QTEST_MAIN(TestMovement)

@@ -113,6 +113,18 @@ void HistoryPage::refresh()
                                 rec.opponent,
                                 outcomeText(rec.outcome),
                                 rec.resultText);
+        // AI 对局：附加 AI 模型信息
+        if (rec.mode == GameMode::HumanVsAI) {
+            const bool playerIsWhite = !rec.whiteAIProvider.isEmpty();
+            const QString aiModel = playerIsWhite ? rec.whiteAIModel : rec.blackAIModel;
+            if (!aiModel.isEmpty())
+                line += QStringLiteral("  [%1]").arg(aiModel);
+        } else if (rec.mode == GameMode::AIVsAI) {
+            if (!rec.whiteAIModel.isEmpty() || !rec.blackAIModel.isEmpty())
+                line += QStringLiteral("  [%1 vs %2]")
+                            .arg(rec.whiteAIModel.isEmpty() ? QStringLiteral("?") : rec.whiteAIModel,
+                                 rec.blackAIModel.isEmpty() ? QStringLiteral("?") : rec.blackAIModel);
+        }
         if (rec.ratingChange != 0) {
             const QString sign = rec.ratingChange > 0 ? QStringLiteral("+") : QString();
             line += QStringLiteral("  (%1%2)").arg(sign).arg(rec.ratingChange);

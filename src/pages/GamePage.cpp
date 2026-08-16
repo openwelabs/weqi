@@ -17,6 +17,7 @@
 #include <QFile>
 #include <QDir>
 #include <QDateTime>
+#include <QTimer>
 
 #include "MainWindow.h"
 #include "ChessBoard.h"
@@ -111,6 +112,12 @@ void GamePage::setupUi()
     connect(m_window->controller(), &GameController::gameOver,
             this, &GamePage::onGameOver);
 
+    // AI 相关信号
+    connect(m_window->controller(), &GameController::aiThinkingChanged,
+            this, &GamePage::onAIThinkingChanged);
+    connect(m_window->controller(), &GameController::aiRequestFailed,
+            this, &GamePage::onAIRequestFailed);
+
     // 初始化信息面板
     updateInfoPanel();
 }
@@ -150,6 +157,9 @@ QWidget *GamePage::createSidePanel()
 
     // 操作按钮（悔棋 / 新游戏）
     layout->addWidget(createActionButtons());
+
+    // AI 思考面板（默认隐藏）
+    layout->addWidget(createAIThinkingPanel());
 
     layout->addStretch(1);
 
@@ -354,6 +364,60 @@ QWidget *GamePage::createSettlementOverlay()
     return overlay;
 }
 
+// AI 思考面板：显示 AI 名称/模型、思考动画与取消按钮
+QWidget *GamePage::createAIThinkingPanel()
+{
+    auto *panel = new QFrame(this);
+    panel->setStyleSheet(QStringLiteral(
+        "QFrame { background-color: %1; border-radius: 14px; }").arg(UiTheme::kCardBg.name()));
+    panel->hide();
+
+    auto *layout = new QVBoxLayout(panel);
+    layout->setContentsMargins(16, 14, 16, 14);
+    layout->setSpacing(6);
+
+    // 思考状态标题（带动态省略号）
+    m_aiThinkingLabel = new QLabel(QStringLiteral("AI 思考中…"), panel);
+    QFont titleFont = m_aiThinkingLabel->font();
+    titleFont.setPointSize(14);
+    titleFont.setBold(true);
+    m_aiThinkingLabel->setFont(titleFont);
+    m_aiThinkingLabel->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kAccent.name()));
+    layout->addWidget(m_aiThinkingLabel);
+
+    // AI 名称与模型
+    m_aiThinkingModelLabel = new QLabel(panel);
+    QFont modelFont = m_aiThinkingModelLabel->font();
+    modelFont.setPointSize(11);
+    m_aiThinkingModelLabel->setFont(modelFont);
+    m_aiThinkingModelLabel->setWordWrap(true);
+    m_aiThinkingModelLabel->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kMutedText.name()));
+    layout->addWidget(m_aiThinkingModelLabel);
+
+    // 取消按钮
+    m_cancelAIButton = new QPushButton(QStringLiteral("取消"), panel);
+    m_cancelAIButton->setStyleSheet(QStringLiteral(
+        "QPushButton { background-color: %1; color: %2; border: none;"
+        " border-radius: 10px; padding: 8px 0; font-size: 13px; font-weight: bold; }"
+        "QPushButton:hover { background-color: %3; }")
+        .arg(UiTheme::kDanger.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
+    connect(m_cancelAIButton, &QPushButton::clicked, this, &GamePage::onCancelAIClicked);
+    layout->addWidget(m_cancelAIButton);
+
+    // 思考动画定时器（循环省略号）
+    m_aiThinkingAnimTimer = new QTimer(this);
+    m_aiThinkingAnimTimer->setInterval(400);
+    connect(m_aiThinkingAnimTimer, &QTimer::timeout, this, [this]() {
+        m_aiThinkingDotCount = (m_aiThinkingDotCount + 1) % 4;
+        QString dots;
+        for (int i = 0; i < m_aiThinkingDotCount; ++i)
+            dots += QChar('.');
+        m_aiThinkingLabel->setText(QStringLiteral("AI 思考中%1").arg(dots));
+    });
+
+    return panel;
+}
+
 // ---- 对局流程 ----
 
 void GamePage::startNewGame(GameMode mode, const QString &opponent,
@@ -506,6 +570,121 @@ void GamePage::onViewGameClicked()
     hideSettlement();
 }
 
+// ---- AI 相关 ----
+
+void GamePage::onAIThinkingChanged(bool thinking, const QString &name, const QString &model)
+{
+    if (!m_aiThinkingPanel)
+        return;
+
+    if (thinking) {
+        // 显示 AI 名称与模型
+        QString modelText = model;
+        if (modelText.isEmpty())
+            modelText = QStringLiteral("未知模型");
+        m_aiThinkingModelLabel->setText(
+            QStringLiteral("%1  ·  %2").arg(name, modelText));
+
+        m_aiThinkingDotCount = 0;
+        m_aiThinkingLabel->setText(QStringLiteral("AI 思考中"));
+        m_aiThinkingPanel->show();
+        m_aiThinkingAnimTimer->start();
+    } else {
+        m_aiThinkingAnimTimer->stop();
+        m_aiThinkingPanel->hide();
+    }
+}
+
+void GamePage::onAIRequestFailed(const QString &error)
+{
+    // 停止思考动画
+    if (m_aiThinkingAnimTimer)
+        m_aiThinkingAnimTimer->stop();
+    if (m_aiThinkingPanel)
+        m_aiThinkingPanel->hide();
+
+    m_lastAIError = error;
+
+    // 显示失败覆盖层
+    if (!m_aiErrorOverlay) {
+        m_aiErrorOverlay = new QWidget(this);
+        m_aiErrorOverlay->setStyleSheet(QStringLiteral(
+            "QWidget { background-color: %1; border-radius: 18px; }").arg(UiTheme::kOverlayBg.name()));
+
+        auto *layout = new QVBoxLayout(m_aiErrorOverlay);
+        layout->setContentsMargins(32, 32, 32, 32);
+        layout->setSpacing(14);
+
+        auto *title = new QLabel(QStringLiteral("AI 请求失败"), m_aiErrorOverlay);
+        QFont titleFont = title->font();
+        titleFont.setPointSize(20);
+        titleFont.setBold(true);
+        title->setFont(titleFont);
+        title->setAlignment(Qt::AlignCenter);
+        title->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kDanger.name()));
+        layout->addWidget(title);
+
+        m_aiErrorLabel = new QLabel(m_aiErrorOverlay);
+        m_aiErrorLabel->setWordWrap(true);
+        m_aiErrorLabel->setAlignment(Qt::AlignCenter);
+        m_aiErrorLabel->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kMutedText.name()));
+        layout->addWidget(m_aiErrorLabel);
+
+        auto *row = new QHBoxLayout();
+        row->setSpacing(12);
+
+        auto *retryBtn = new QPushButton(QStringLiteral("重试"), m_aiErrorOverlay);
+        retryBtn->setStyleSheet(QStringLiteral(
+            "QPushButton { background-color: %1; color: %2; border: none;"
+            " border-radius: 10px; padding: 10px 24px; font-size: 14px; font-weight: bold; }"
+            "QPushButton:hover { background-color: %3; }")
+            .arg(UiTheme::kAccent.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
+        connect(retryBtn, &QPushButton::clicked, this, &GamePage::onRetryAIClicked);
+        row->addWidget(retryBtn);
+
+        auto *cancelBtn = new QPushButton(QStringLiteral("取消"), m_aiErrorOverlay);
+        cancelBtn->setStyleSheet(QStringLiteral(
+            "QPushButton { background-color: %1; color: %2; border: none;"
+            " border-radius: 10px; padding: 10px 24px; font-size: 14px; font-weight: bold; }"
+            "QPushButton:hover { background-color: %3; }")
+            .arg(UiTheme::kCardBg.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
+        connect(cancelBtn, &QPushButton::clicked, this, &GamePage::onAICancelClicked);
+        row->addWidget(cancelBtn);
+
+        layout->addLayout(row);
+    }
+
+    m_aiErrorLabel->setText(error.isEmpty() ? QStringLiteral("未知错误") : error);
+
+    // 覆盖在棋盘区域中央
+    const QRect boardGeo = m_board->geometry();
+    const QPoint boardTopLeft = m_board->mapTo(this, QPoint(0, 0));
+    m_aiErrorOverlay->setGeometry(QRect(boardTopLeft, boardGeo.size()));
+    m_aiErrorOverlay->raise();
+    m_aiErrorOverlay->show();
+}
+
+void GamePage::onCancelAIClicked()
+{
+    // 取消当前 AI 请求
+    m_window->controller()->cancelAI();
+}
+
+void GamePage::onRetryAIClicked()
+{
+    if (m_aiErrorOverlay)
+        m_aiErrorOverlay->hide();
+
+    // 重新触发 AI 走子
+    m_window->controller()->retryAI();
+}
+
+void GamePage::onAICancelClicked()
+{
+    if (m_aiErrorOverlay)
+        m_aiErrorOverlay->hide();
+}
+
 // ---- 更新信息面板 ----
 
 void GamePage::updateInfoPanel()
@@ -620,6 +799,12 @@ void GamePage::saveGame(GameController::Result result, const QString &reason)
     record.blackName = m_blackName;
     record.moveCount = controller->history().count();
     record.reason = reason;
+
+    // AI 对局信息
+    record.whiteAIProvider = controller->whiteAIProviderName();
+    record.whiteAIModel = controller->whiteAIModel();
+    record.blackAIProvider = controller->blackAIProviderName();
+    record.blackAIModel = controller->blackAIModel();
 
     // 结果文本与玩家视角结果
     const QString playerName = m_window->profile()->playerName();

@@ -37,6 +37,12 @@ struct GameRecord
     int moveCount = 0;       // 步数
     QString pgn;             // 完整棋谱（PGN）
 
+    // AI 对局信息（仅 AI 对局使用）
+    QString whiteAIProvider; // 白方 AI Provider 名称
+    QString whiteAIModel;    // 白方 AI 模型
+    QString blackAIProvider; // 黑方 AI Provider 名称
+    QString blackAIModel;    // 黑方 AI 模型
+
     // 序列化
     QJsonObject toJson() const;
     static GameRecord fromJson(const QJsonObject &obj);

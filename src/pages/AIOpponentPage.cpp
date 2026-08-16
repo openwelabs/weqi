@@ -8,6 +8,8 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QComboBox>
+#include <QRandomGenerator>
 
 #include "MainWindow.h"
 #include "UiTheme.h"
@@ -46,15 +48,19 @@ void AIOpponentPage::setupUi()
 
     // 说明
     auto *intro = UiTheme::createMutedLabel(
-        QStringLiteral("选择要与你对弈的 AI。当前为界面预览，AI 引擎将在后续版本接入。"), this);
+        QStringLiteral("选择要与你对弈的 AI，以及 AI 执子方。"), this);
     intro->setWordWrap(true);
     rootLayout->addWidget(intro);
 
-    // AI 列表卡片
+    // 主卡片
     auto *card = UiTheme::createCard(this);
     auto *layout = new QVBoxLayout(card);
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(14);
+
+    // ---- AI Provider 列表 ----
+    auto *aiTitle = UiTheme::createSectionLabel(QStringLiteral("选择 AI"), card);
+    layout->addWidget(aiTitle);
 
     m_aiList = new QListWidget(card);
     m_aiList->setStyleSheet(QStringLiteral(
@@ -63,27 +69,35 @@ void AIOpponentPage::setupUi()
         "QListWidget::item { padding: 14px 12px; border-radius: 10px; }"
         "QListWidget::item:selected { background-color: %3; }")
         .arg(UiTheme::kPanelBg.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
-
-    // 内置 AI
-    auto *webuItem = new QListWidgetItem(QStringLiteral("Webu  ·  内置 AI"), m_aiList);
-    webuItem->setData(Qt::UserRole, QStringLiteral("Webu"));
-    m_aiList->addItem(webuItem);
-
-    // 自定义 AI（来自配置的 Providers）
-    const QVector<AIProvider> &providers = m_window->aiProviders()->providers();
-    for (const AIProvider &p : providers) {
-        auto *item = new QListWidgetItem(QStringLiteral("%1  ·  %2").arg(p.name, p.model), m_aiList);
-        item->setData(Qt::UserRole, p.name);
-        m_aiList->addItem(item);
-    }
-
-    // 未来扩展提示
-    auto *future = UiTheme::createMutedLabel(
-        QStringLiteral("未来将支持：OpenAI 兼容接口、本地模型、第三方 AI。"), card);
-    future->setWordWrap(true);
-    layout->addWidget(future);
-
     layout->addWidget(m_aiList);
+
+    // 无配置提示（默认隐藏）
+    m_noConfigLabel = UiTheme::createMutedLabel(
+        QStringLiteral("尚未配置任何 AI Provider。请先在设置中配置 AI。"), card);
+    m_noConfigLabel->setWordWrap(true);
+    m_noConfigLabel->hide();
+    layout->addWidget(m_noConfigLabel);
+
+    // 配置 AI 按钮（默认隐藏）
+    m_configureBtn = UiTheme::createSecondaryButton(QStringLiteral("配置 AI"), card);
+    m_configureBtn->setMinimumHeight(44);
+    connect(m_configureBtn, &QPushButton::clicked, this, [this]() {
+        m_window->showSettings();
+    });
+    m_configureBtn->hide();
+    layout->addWidget(m_configureBtn);
+
+    // ---- 执子方选择 ----
+    auto *sideTitle = UiTheme::createSectionLabel(QStringLiteral("AI 执子方"), card);
+    layout->addWidget(sideTitle);
+
+    m_sideCombo = new QComboBox(card);
+    m_sideCombo->addItem(QStringLiteral("白方（AI 执白）"), QStringLiteral("white"));
+    m_sideCombo->addItem(QStringLiteral("黑方（AI 执黑）"), QStringLiteral("black"));
+    m_sideCombo->addItem(QStringLiteral("随机"), QStringLiteral("random"));
+    m_sideCombo->setStyleSheet(UiTheme::comboStyle());
+    m_sideCombo->setMinimumHeight(44);
+    layout->addWidget(m_sideCombo);
 
     // 描述
     m_descLabel = UiTheme::createMutedLabel(QStringLiteral("选择一个 AI 对手开始对局。"), card);
@@ -91,28 +105,79 @@ void AIOpponentPage::setupUi()
     layout->addWidget(m_descLabel);
 
     // 开始按钮
-    auto *startBtn = UiTheme::createPrimaryButton(QStringLiteral("开始对局"), card);
-    startBtn->setMinimumHeight(52);
-    connect(startBtn, &QPushButton::clicked, this, &AIOpponentPage::startGame);
-    layout->addWidget(startBtn);
+    m_startBtn = UiTheme::createPrimaryButton(QStringLiteral("开始对局"), card);
+    m_startBtn->setMinimumHeight(52);
+    connect(m_startBtn, &QPushButton::clicked, this, &AIOpponentPage::startGame);
+    layout->addWidget(m_startBtn);
 
     rootLayout->addWidget(card);
     rootLayout->addStretch(1);
 }
 
+void AIOpponentPage::refreshProviderList()
+{
+    m_aiList->clear();
+
+    const QVector<AIProvider> &providers = m_window->aiProviders()->providers();
+    for (const AIProvider &p : providers) {
+        auto *item = new QListWidgetItem(
+            QStringLiteral("%1  ·  %2").arg(p.name, p.model), m_aiList);
+        item->setData(Qt::UserRole, p.id);
+        m_aiList->addItem(item);
+    }
+
+    const bool hasProviders = !providers.isEmpty();
+    m_aiList->setVisible(hasProviders);
+    m_noConfigLabel->setVisible(!hasProviders);
+    m_configureBtn->setVisible(!hasProviders);
+    m_startBtn->setEnabled(hasProviders);
+
+    if (hasProviders)
+        m_aiList->setCurrentRow(0);
+}
+
 void AIOpponentPage::onShown()
 {
-    if (m_aiList->count() > 0)
-        m_aiList->setCurrentRow(0);
+    refreshProviderList();
+}
+
+QString AIOpponentPage::currentProviderId() const
+{
+    QListWidgetItem *item = m_aiList->currentItem();
+    if (!item)
+        return QString();
+    return item->data(Qt::UserRole).toString();
 }
 
 void AIOpponentPage::startGame()
 {
-    QListWidgetItem *item = m_aiList->currentItem();
-    if (!item)
+    const QString providerId = currentProviderId();
+    if (providerId.isEmpty())
         return;
 
-    const QString aiName = item->data(Qt::UserRole).toString();
+    const AIProvider *provider = m_window->aiProviders()->providerById(providerId);
+    if (!provider)
+        return;
+
     const QString playerName = m_window->profile()->playerName();
-    m_window->startGame(GameMode::HumanVsAI, aiName, playerName, aiName);
+    const QString aiName = provider->name;
+
+    // 确定 AI 执子方
+    const QString side = m_sideCombo->currentData().toString();
+    bool aiIsWhite = false;
+    if (side == QStringLiteral("white")) {
+        aiIsWhite = true;
+    } else if (side == QStringLiteral("black")) {
+        aiIsWhite = false;
+    } else { // random
+        aiIsWhite = (QRandomGenerator::global()->bounded(2) == 0);
+    }
+
+    if (aiIsWhite) {
+        m_window->startAIGame(GameMode::HumanVsAI, aiName, aiName, playerName,
+                              true, false, providerId, QString());
+    } else {
+        m_window->startAIGame(GameMode::HumanVsAI, aiName, playerName, aiName,
+                              false, true, QString(), providerId);
+    }
 }

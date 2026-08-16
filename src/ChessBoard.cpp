@@ -375,6 +375,8 @@ void ChessBoard::mousePressEvent(QMouseEvent *event)
         return;
     if (m_animating)
         return; // 动画期间限制输入
+    if (m_controller->isAIThinking())
+        return; // AI 思考期间禁止玩家操作
 
     int row, col;
     if (!squareAt(event->position(), row, col))

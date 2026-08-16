@@ -46,6 +46,8 @@ qt_add_executable(Weqi
     src/pages/NewGamePage.h
     src/pages/AIOpponentPage.cpp
     src/pages/AIOpponentPage.h
+    src/pages/AIVsAIPage.cpp
+    src/pages/AIVsAIPage.h
     src/pages/GamePage.cpp
     src/pages/GamePage.h
     src/pages/HistoryPage.cpp
@@ -70,6 +72,8 @@ qt_add_executable(Weqi
     src/data/StatsManager.h
     src/data/RatingSystem.cpp
     src/data/RatingSystem.h
+    src/ai/AIManager.cpp
+    src/ai/AIManager.h
     resources/resources.qrc
 )
 
@@ -81,6 +85,7 @@ target_include_directories(Weqi PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/data
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pages
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ai
 )
 
 # 让程序在 Linux 上正确显示窗口图标

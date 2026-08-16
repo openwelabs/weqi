@@ -17,6 +17,10 @@ QJsonObject GameRecord::toJson() const
     obj["ratingChange"] = ratingChange;
     obj["moveCount"] = moveCount;
     obj["pgn"] = pgn;
+    obj["whiteAIProvider"] = whiteAIProvider;
+    obj["whiteAIModel"] = whiteAIModel;
+    obj["blackAIProvider"] = blackAIProvider;
+    obj["blackAIModel"] = blackAIModel;
     return obj;
 }
 
@@ -39,5 +43,9 @@ GameRecord GameRecord::fromJson(const QJsonObject &obj)
     rec.ratingChange = obj["ratingChange"].toInt(0);
     rec.moveCount = obj["moveCount"].toInt(0);
     rec.pgn = obj["pgn"].toString();
+    rec.whiteAIProvider = obj["whiteAIProvider"].toString();
+    rec.whiteAIModel = obj["whiteAIModel"].toString();
+    rec.blackAIProvider = obj["blackAIProvider"].toString();
+    rec.blackAIModel = obj["blackAIModel"].toString();
     return rec;
 }
