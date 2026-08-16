@@ -1,0 +1,15 @@
+# 构建产物
+build/
+build-*/
+
+# Qt / CMake 生成文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.user
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
