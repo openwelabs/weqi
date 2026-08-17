@@ -36,19 +36,29 @@ def fen_to_ascii(fen: str) -> str:
     return "\n".join(lines)
 
 
-def _build_prompt(fen: str, turn: str, move_history: list, legal_moves: list) -> str:
+def _build_prompt(fen: str, turn: str, move_history: list, legal_moves: list,
+                  last_error: str = "") -> str:
     """构造发送给 AI 的 Prompt。
 
     明确要求模型只返回一个标准 UCI 走法，不返回解释/Markdown/多个候选。
     附带 ASCII 棋盘图，帮助模型准确理解当前局面。
     关键：把当前方所有合法走法列出来，要求模型从中选择一个，杜绝非法走法。
+    若上次选错（last_error 非空），明确告知 AI 上次选错了，要求重新选一个不同的。
     """
     history = " ".join(move_history) if move_history else "(无)"
     board = fen_to_ascii(fen)
     turn_cn = "白方" if turn == "white" else "黑方"
     legal = ", ".join(legal_moves) if legal_moves else "(无)"
+
+    feedback = ""
+    if last_error:
+        feedback = (
+            f"\n【上次你选错了】你上次输出了 {last_error}，但它不是合法走法。\n"
+            "请务必从上面的合法走法列表中重新选择一个不同的走法。\n"
+        )
+
     return (
-        "你是一个国际象棋引擎，只负责输出下一步棋的走法。\n"
+        "你是一个国际象棋引擎，只负责输出下一步棋的走法，以及一句符合你性格的简短吐槽。\n"
         "下面是当前棋盘（大写=白方，小写=黑方，. =空格）：\n"
         f"{board}\n\n"
         f"当前轮到：{turn_cn}（{turn}）\n"
@@ -57,17 +67,30 @@ def _build_prompt(fen: str, turn: str, move_history: list, legal_moves: list) ->
         f"{legal}\n\n"
         "请从上面的合法走法列表中，选择你认为最好的一步棋。\n"
         "【重要】你只能从上面列出的合法走法中选择，绝不能输出列表之外的走法。\n"
-        "你的回复必须严格遵循以下格式：\n"
-        "只输出一个标准 UCI 走法，例如 e2e4、g1f3、e1g1、e7e8q。\n"
-        "UCI 走法由来源格和目标格组成（如 e2e4），升变时末尾加棋子字母（如 e7e8q）。\n"
-        "禁止输出任何解释、分析、Markdown、代码块、自然语言、多个候选走法或标点符号。\n"
-        "你的整个回复只能是一个类似 e7e5 的字符串，不要包含其他任何内容。"
+        f"{feedback}"
+        "同时，根据当前棋局、你刚走的这步棋、以及对手的行动，"
+        "用一句简短的话吐槽/调侃/阴阳怪气一下（30 个中文字符以内）。\n"
+        "语气示例（只是示例，不要照抄）：\n"
+        "“哈哈哈哈！你马炸了！”\n"
+        "“不是哥们，你这一步认真的？”\n"
+        "“好好好，这么玩是吧。”\n"
+        "“完了，你的王要遭罪了。”\n"
+        "“漂亮，不过你真的确定要这么走？”\n"
+        "“哈哈，终于让我逮到了。”\n"
+        "要求：必须和当前棋局相关；不要每次用相同句式；不要长篇大论；"
+        "不要输出思考过程；不要解释分析；不要为了凑字数强行说话。\n"
+        "你的整个回复必须严格遵循以下 JSON 格式，不要输出任何其他内容：\n"
+        '{"move": "e7e5", "message": "哈哈，你这一步有点东西。"}\n'
+        "其中 move 是标准 UCI 走法（如 e2e4、g1f3、e1g1、e7e8q），"
+        "必须从上面的合法走法列表中选择；message 是你的一句话。\n"
+        "禁止输出 Markdown、代码块、解释、多个候选走法或任何其他字段。"
     )
 
 
 def request_move(base_url: str, api_key: str, model: str,
                  fen: str, turn: str, move_history: list,
                  legal_moves: list = None,
+                 last_error: str = "",
                  timeout: float = 60.0) -> str:
     """调用 OpenAI-compatible API，返回 AI 的原始文本回复。
 
@@ -79,6 +102,7 @@ def request_move(base_url: str, api_key: str, model: str,
         turn:     当前回合（white / black）
         move_history: 已走的 UCI 走法列表
         legal_moves: 当前方所有合法走法（UCI 格式），AI 必须从中选择一个
+        last_error: 上次 AI 选错的走法反馈（空表示首次请求），用于自动调教重试
         timeout:  请求超时（秒）
 
     返回：
@@ -101,7 +125,7 @@ def request_move(base_url: str, api_key: str, model: str,
         "model": model,
         "messages": [
             {"role": "system", "content": "你是一个国际象棋引擎。你的每次回复必须且只能是一个标准 UCI 走法字符串（如 e2e4、g1f3、e1g1、e7e8q），不得包含任何解释、标点、Markdown 或自然语言。"},
-            {"role": "user", "content": _build_prompt(fen, turn, move_history, legal_moves or [])},
+            {"role": "user", "content": _build_prompt(fen, turn, move_history, legal_moves or [], last_error)},
         ],
         "temperature": 0.2,
         "max_tokens": 32,

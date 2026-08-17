@@ -90,8 +90,18 @@ void GamePage::setupUi()
     auto *boardContainer = new QWidget(this);
     auto *boardLayout = new QVBoxLayout(boardContainer);
     boardLayout->setContentsMargins(0, 0, 0, 0);
+    boardLayout->setSpacing(10);
+    // 白方 AI 聊天对话框（棋盘上方，默认隐藏）
+    m_aiChatDialogWhite = createAIChatDialog(PieceColor::White);
+    boardLayout->addWidget(m_aiChatDialogWhite);
     m_board = new ChessBoard(boardContainer);
-    boardLayout->addWidget(m_board);
+    boardLayout->addWidget(m_board, 1);
+    // 黑方 AI 聊天对话框（棋盘下方，默认隐藏）
+    m_aiChatDialogBlack = createAIChatDialog(PieceColor::Black);
+    boardLayout->addWidget(m_aiChatDialogBlack);
+    // AI vs AI 控制条（默认隐藏，仅 AI vs AI 模式显示）
+    m_aiVsAiControls = createAIVsAIControls();
+    boardLayout->addWidget(m_aiVsAiControls);
     bodyLayout->addWidget(boardContainer, 1);
 
     // 右侧信息区
@@ -117,6 +127,10 @@ void GamePage::setupUi()
             this, &GamePage::onAIThinkingChanged);
     connect(m_window->controller(), &GameController::aiRequestFailed,
             this, &GamePage::onAIRequestFailed);
+    connect(m_window->controller(), &GameController::aiMessageReady,
+            this, &GamePage::onAIMessageReady);
+    connect(m_window->controller(), &GameController::aiVsAiStateChanged,
+            this, &GamePage::onAIVsAIStateChanged);
 
     // 初始化信息面板
     updateInfoPanel();
@@ -418,6 +432,94 @@ QWidget *GamePage::createAIThinkingPanel()
     return panel;
 }
 
+// AI 聊天对话框：棋盘上方/下方的一张轻量信息卡，显示模型名 + 一句聊天内容。
+// 白方与黑方各一个，通过 color 区分。默认隐藏，仅在 AI 走法合法并执行后淡入显示，随后淡出。
+QWidget *GamePage::createAIChatDialog(PieceColor color)
+{
+    auto *dialog = new QFrame(this);
+    dialog->setStyleSheet(QStringLiteral(
+        "QFrame { background-color: %1; border-radius: 14px; }").arg(UiTheme::kCardBg.name()));
+    dialog->hide();
+
+    auto *layout = new QVBoxLayout(dialog);
+    layout->setContentsMargins(16, 10, 16, 10);
+    layout->setSpacing(4);
+
+    // 标题：当前 AI 模型名（动态更新）
+    auto *titleLabel = new QLabel(dialog);
+    QFont titleFont = titleLabel->font();
+    titleFont.setPointSize(11);
+    titleFont.setBold(true);
+    titleLabel->setFont(titleFont);
+    titleLabel->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kAccent.name()));
+    layout->addWidget(titleLabel);
+
+    // 消息内容
+    auto *msgLabel = new QLabel(dialog);
+    QFont msgFont = msgLabel->font();
+    msgFont.setPointSize(13);
+    msgLabel->setFont(msgFont);
+    msgLabel->setWordWrap(true);
+    msgLabel->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kTitleColor.name()));
+    layout->addWidget(msgLabel);
+
+    // 绑定到对应方
+    if (color == PieceColor::White) {
+        m_aiChatTitleWhite = titleLabel;
+        m_aiChatMessageWhite = msgLabel;
+    } else {
+        m_aiChatTitleBlack = titleLabel;
+        m_aiChatMessageBlack = msgLabel;
+    }
+
+    return dialog;
+}
+
+// AI vs AI 控制条：Start / Pause / Resume / Stop 四个按钮。
+// 仅在 AI vs AI 模式下显示，用于控制自动对战流程。
+QWidget *GamePage::createAIVsAIControls()
+{
+    auto *card = new QFrame(this);
+    card->setStyleSheet(QStringLiteral(
+        "QFrame { background-color: %1; border-radius: 14px; }").arg(UiTheme::kCardBg.name()));
+    card->hide();
+
+    auto *layout = new QHBoxLayout(card);
+    layout->setContentsMargins(12, 10, 12, 10);
+    layout->setSpacing(8);
+
+    auto makeBtn = [this, card](const QString &text) {
+        auto *btn = new QPushButton(text, card);
+        btn->setStyleSheet(QStringLiteral(
+            "QPushButton { background-color: %1; color: %2; border: none;"
+            " border-radius: 10px; padding: 8px 0; font-size: 13px; font-weight: bold; }"
+            "QPushButton:hover { background-color: %3; }"
+            "QPushButton:disabled { color: %4; background-color: %5; }")
+            .arg(UiTheme::kAccent.name()).arg(UiTheme::kTitleColor.name())
+            .arg(UiTheme::kAccentSoft.name()).arg(UiTheme::kMutedText.name())
+            .arg(UiTheme::kPanelBg.name()));
+        return btn;
+    };
+
+    m_aiVsAiStartBtn = makeBtn(QStringLiteral("开始"));
+    connect(m_aiVsAiStartBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIStartClicked);
+    layout->addWidget(m_aiVsAiStartBtn, 1);
+
+    m_aiVsAiPauseBtn = makeBtn(QStringLiteral("暂停"));
+    connect(m_aiVsAiPauseBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIPauseClicked);
+    layout->addWidget(m_aiVsAiPauseBtn, 1);
+
+    m_aiVsAiResumeBtn = makeBtn(QStringLiteral("继续"));
+    connect(m_aiVsAiResumeBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIResumeClicked);
+    layout->addWidget(m_aiVsAiResumeBtn, 1);
+
+    m_aiVsAiStopBtn = makeBtn(QStringLiteral("停止"));
+    connect(m_aiVsAiStopBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIStopClicked);
+    layout->addWidget(m_aiVsAiStopBtn, 1);
+
+    return card;
+}
+
 // ---- 对局流程 ----
 
 void GamePage::startNewGame(GameMode mode, const QString &opponent,
@@ -430,6 +532,18 @@ void GamePage::startNewGame(GameMode mode, const QString &opponent,
 
     m_window->controller()->newGame();
     hideSettlement();
+    if (m_aiChatDialogWhite)
+        m_aiChatDialogWhite->hide();
+    if (m_aiChatDialogBlack)
+        m_aiChatDialogBlack->hide();
+
+    // AI vs AI 模式：显示控制条，初始为 Stopped（等待 Start）
+    if (m_aiVsAiControls) {
+        m_aiVsAiControls->setVisible(m_mode == GameMode::AIVsAI);
+        if (m_mode == GameMode::AIVsAI)
+            onAIVsAIStateChanged(false, false);
+    }
+
     updateInfoPanel();
     updateMovePanel();
 }
@@ -461,6 +575,10 @@ void GamePage::continueSavedGame()
         return;
 
     hideSettlement();
+    if (m_aiChatDialogWhite)
+        m_aiChatDialogWhite->hide();
+    if (m_aiChatDialogBlack)
+        m_aiChatDialogBlack->hide();
     updateInfoPanel();
     updateMovePanel();
 }
@@ -585,6 +703,24 @@ void GamePage::onAIThinkingChanged(bool thinking, const QString &name, const QSt
         m_aiThinkingModelLabel->setText(
             QStringLiteral("%1  ·  %2").arg(name, modelText));
 
+        // 同步更新聊天对话框标题：优先使用用户填写的 Provider 名称（"名称"字段），
+        // 其次模型 API 名，最后回退到 "AI"。不自动从 Provider 类型推断。
+        const QString title = !name.isEmpty() ? name
+                            : (!model.isEmpty() ? model
+                            : QStringLiteral("AI"));
+
+        // 根据当前回合方更新对应聊天框标题
+        GameController *controller = m_window->controller();
+        if (controller && controller->currentTurn() == PieceColor::White) {
+            m_aiChatModelNameWhite = title;
+            if (m_aiChatTitleWhite)
+                m_aiChatTitleWhite->setText(title);
+        } else {
+            m_aiChatModelNameBlack = title;
+            if (m_aiChatTitleBlack)
+                m_aiChatTitleBlack->setText(title);
+        }
+
         m_aiThinkingDotCount = 0;
         m_aiThinkingLabel->setText(QStringLiteral("AI 思考中"));
         m_aiThinkingPanel->show();
@@ -595,6 +731,48 @@ void GamePage::onAIThinkingChanged(bool thinking, const QString &name, const QSt
     }
 }
 
+void GamePage::onAIMessageReady(const QString &message, PieceColor color)
+{
+    // 选择对应方的聊天对话框
+    QWidget *dialog = (color == PieceColor::White) ? m_aiChatDialogWhite : m_aiChatDialogBlack;
+    QLabel *msgLabel = (color == PieceColor::White) ? m_aiChatMessageWhite : m_aiChatMessageBlack;
+    if (!dialog || !msgLabel || message.isEmpty())
+        return;
+
+    // 设置消息内容
+    msgLabel->setText(message);
+
+    // 淡入显示
+    dialog->show();
+    dialog->raise();
+    auto *effect = new QGraphicsOpacityEffect(dialog);
+    dialog->setGraphicsEffect(effect);
+    auto *fadeIn = new QPropertyAnimation(effect, "opacity", this);
+    fadeIn->setDuration(250);
+    fadeIn->setStartValue(0.0);
+    fadeIn->setEndValue(1.0);
+    fadeIn->setEasingCurve(QEasingCurve::OutCubic);
+    fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
+
+    // 停留片刻后淡出
+    QTimer::singleShot(4000, this, [this, dialog]() {
+        if (!dialog || !dialog->isVisible())
+            return;
+        auto *effect = new QGraphicsOpacityEffect(dialog);
+        dialog->setGraphicsEffect(effect);
+        auto *fadeOut = new QPropertyAnimation(effect, "opacity", this);
+        fadeOut->setDuration(400);
+        fadeOut->setStartValue(1.0);
+        fadeOut->setEndValue(0.0);
+        fadeOut->setEasingCurve(QEasingCurve::InCubic);
+        connect(fadeOut, &QPropertyAnimation::finished, this, [dialog]() {
+            if (dialog)
+                dialog->hide();
+        });
+        fadeOut->start(QAbstractAnimation::DeleteWhenStopped);
+    });
+}
+
 void GamePage::onAIRequestFailed(const QString &error)
 {
     // 停止思考动画
@@ -602,6 +780,11 @@ void GamePage::onAIRequestFailed(const QString &error)
         m_aiThinkingAnimTimer->stop();
     if (m_aiThinkingPanel)
         m_aiThinkingPanel->hide();
+    // AI 请求失败时不显示聊天内容
+    if (m_aiChatDialogWhite)
+        m_aiChatDialogWhite->hide();
+    if (m_aiChatDialogBlack)
+        m_aiChatDialogBlack->hide();
 
     m_lastAIError = error;
 
@@ -685,6 +868,44 @@ void GamePage::onAICancelClicked()
         m_aiErrorOverlay->hide();
 }
 
+// ---- AI vs AI 控制 ----
+
+void GamePage::onAIVsAIStartClicked()
+{
+    m_window->controller()->startAIVsAI();
+}
+
+void GamePage::onAIVsAIPauseClicked()
+{
+    m_window->controller()->pauseAIVsAI();
+}
+
+void GamePage::onAIVsAIResumeClicked()
+{
+    m_window->controller()->resumeAIVsAI();
+}
+
+void GamePage::onAIVsAIStopClicked()
+{
+    m_window->controller()->stopAIVsAI();
+}
+
+void GamePage::onAIVsAIStateChanged(bool running, bool paused)
+{
+    if (!m_aiVsAiControls)
+        return;
+
+    // 根据状态启用/禁用按钮
+    if (m_aiVsAiStartBtn)
+        m_aiVsAiStartBtn->setEnabled(!running);
+    if (m_aiVsAiPauseBtn)
+        m_aiVsAiPauseBtn->setEnabled(running && !paused);
+    if (m_aiVsAiResumeBtn)
+        m_aiVsAiResumeBtn->setEnabled(running && paused);
+    if (m_aiVsAiStopBtn)
+        m_aiVsAiStopBtn->setEnabled(running);
+}
+
 // ---- 更新信息面板 ----
 
 void GamePage::updateInfoPanel()
@@ -693,11 +914,29 @@ void GamePage::updateInfoPanel()
     if (!controller)
         return;
 
-    // 当前回合
+    // 当前回合：显示当前回合方，若为 AI 则显示其名称（用户填写的"名称"字段）
     if (m_turnValue) {
-        m_turnValue->setText(controller->currentTurn() == PieceColor::White
-                                 ? QStringLiteral("白方")
-                                 : QStringLiteral("黑方"));
+        const bool whiteTurn = (controller->currentTurn() == PieceColor::White);
+        QString turnText = whiteTurn ? QStringLiteral("白方") : QStringLiteral("黑方");
+
+        // 若当前回合方为 AI，附加其名称
+        if (controller->isAIVsAI()) {
+            const QString aiName = whiteTurn
+                                       ? controller->whiteAIProviderName()
+                                       : controller->blackAIProviderName();
+            if (!aiName.isEmpty())
+                turnText = QStringLiteral("%1 · %2").arg(turnText, aiName);
+        } else if (whiteTurn && controller->isWhiteAI()) {
+            const QString aiName = controller->whiteAIProviderName();
+            if (!aiName.isEmpty())
+                turnText = QStringLiteral("%1 · %2").arg(turnText, aiName);
+        } else if (!whiteTurn && controller->isBlackAI()) {
+            const QString aiName = controller->blackAIProviderName();
+            if (!aiName.isEmpty())
+                turnText = QStringLiteral("%1 · %2").arg(turnText, aiName);
+        }
+
+        m_turnValue->setText(turnText);
     }
 
     // 对局状态

@@ -43,6 +43,8 @@ private:
     QWidget *createPromotionOverlay();
     QWidget *createSettlementOverlay();
     QWidget *createAIThinkingPanel();
+    QWidget *createAIChatDialog(PieceColor color);
+    QWidget *createAIVsAIControls();
 
     // 信号槽
     void onMoveMade(int fromRow, int fromCol, int toRow, int toCol);
@@ -60,6 +62,14 @@ private:
     void onCancelAIClicked();
     void onRetryAIClicked();
     void onAICancelClicked();
+    void onAIMessageReady(const QString &message, PieceColor color);
+    void onAIVsAIStateChanged(bool running, bool paused);
+
+    // AI vs AI 控制按钮
+    void onAIVsAIStartClicked();
+    void onAIVsAIPauseClicked();
+    void onAIVsAIResumeClicked();
+    void onAIVsAIStopClicked();
 
     // 更新信息面板
     void updateInfoPanel();
@@ -97,6 +107,24 @@ private:
     QPushButton *m_cancelAIButton = nullptr;
     QTimer *m_aiThinkingAnimTimer = nullptr;
     int m_aiThinkingDotCount = 0;
+
+    // AI 聊天对话框（棋盘上方，显示模型名 + 一句聊天内容）
+    // 白方与黑方各一个，独立显示，互不干扰。
+    QWidget *m_aiChatDialogWhite = nullptr;
+    QLabel *m_aiChatTitleWhite = nullptr;
+    QLabel *m_aiChatMessageWhite = nullptr;
+    QWidget *m_aiChatDialogBlack = nullptr;
+    QLabel *m_aiChatTitleBlack = nullptr;
+    QLabel *m_aiChatMessageBlack = nullptr;
+    QString m_aiChatModelNameWhite;   // 白方 AI 模型名（用于标题，动态更新）
+    QString m_aiChatModelNameBlack;   // 黑方 AI 模型名（用于标题，动态更新）
+
+    // AI vs AI 控制按钮
+    QWidget *m_aiVsAiControls = nullptr;
+    QPushButton *m_aiVsAiStartBtn = nullptr;
+    QPushButton *m_aiVsAiPauseBtn = nullptr;
+    QPushButton *m_aiVsAiResumeBtn = nullptr;
+    QPushButton *m_aiVsAiStopBtn = nullptr;
 
     // AI 失败对话框（用于重试/取消）
     QWidget *m_aiErrorOverlay = nullptr;

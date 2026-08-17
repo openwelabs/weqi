@@ -92,6 +92,22 @@ public:
     // 重试当前 AI 请求（用于 AI 请求失败后的重试）
     void retryAI();
 
+    // ---- AI vs AI 控制 ----
+
+    // 当前是否为 AI vs AI 模式
+    bool isAIVsAI() const { return m_aiVsAiMode; }
+
+    // AI vs AI 运行状态
+    enum class AIVsAIState { Stopped, Running, Paused };
+
+    AIVsAIState aiVsAiState() const { return m_aiVsAiState; }
+
+    // 开始 / 暂停 / 继续 / 停止 AI vs AI 自动对战
+    void startAIVsAI();
+    void pauseAIVsAI();
+    void resumeAIVsAI();
+    void stopAIVsAI();
+
     // 当前回合是否为 AI
     bool isCurrentTurnAI() const;
 
@@ -142,6 +158,12 @@ signals:
     // AI 请求失败（UI 应显示错误并提供重试/取消）
     void aiRequestFailed(const QString &error);
 
+    // AI 走法合法并已执行后，发出 AI 聊天内容（可能为空）及对应方（白/黑）
+    void aiMessageReady(const QString &message, PieceColor color);
+
+    // AI vs AI 运行状态变化（running/paused 表示当前状态）
+    void aiVsAiStateChanged(bool running, bool paused);
+
 private:
     // 执行一步棋（内部），更新状态与历史，检测结果
     void applyMove(const Move &move);
@@ -161,7 +183,7 @@ private:
     void maybeTriggerAI();
 
     // 处理 AI 返回的走法（验证合法性，非法则重试）
-    void onAIMoveReady(const QString &uciMove);
+    void onAIMoveReady(const QString &uciMove, const QString &message);
 
     // 处理 AI 请求失败
     void onAIFailed(const QString &error);
@@ -195,9 +217,16 @@ private:
     AIProvider m_whiteProvider;
     AIProvider m_blackProvider;
 
+    // AI vs AI 模式与运行状态
+    bool m_aiVsAiMode = false;
+    AIVsAIState m_aiVsAiState = AIVsAIState::Stopped;
+
     bool m_aiThinking = false;
     QString m_aiThinkingName;
     QString m_aiThinkingModel;
     int m_aiRetryCount = 0;   // 当前 AI 走法重试次数
     QString m_aiPendingUci;   // 待验证的 AI 走法
+    QString m_aiLastError;    // 上次 AI 选错的走法（用于自动调教重试反馈）
+    QString m_aiPendingMessage; // 待随合法走法发出的 AI 聊天内容
+    PieceColor m_aiPendingMessageColor = PieceColor::White; // 待发聊天内容对应方
 };

@@ -83,6 +83,14 @@ void GameController::applyMove(const Move &move)
     evaluateResult();
     emit gameStateChanged();
 
+    // 若 AI 走法合法并已执行，发出其聊天内容（仅一次，非法/重试时不会到达这里）
+    if (!m_aiPendingMessage.isEmpty()) {
+        const QString msg = m_aiPendingMessage;
+        const PieceColor color = m_aiPendingMessageColor;
+        m_aiPendingMessage.clear();
+        emit aiMessageReady(msg, color);
+    }
+
     // 若对局未结束且下一回合为 AI，触发 AI 请求
     if (m_result == Result::Ongoing)
         maybeTriggerAI();
@@ -268,11 +276,19 @@ void GameController::newGame()
     m_resultReason.clear();
     m_hasPendingPromotion = false;
     m_aiRetryCount = 0;
+    m_aiLastError.clear();
+    m_aiPendingMessage.clear();
+
+    // AI vs AI：新游戏后回到 Stopped，等待用户点击 Start
+    if (m_aiVsAiMode) {
+        m_aiVsAiState = AIVsAIState::Stopped;
+        emit aiVsAiStateChanged(false, false);
+    }
 
     emit gameReset();
     emit gameStateChanged();
 
-    // 若白方为 AI，触发 AI 走第一步
+    // 若白方为 AI（Human vs AI），触发 AI 走第一步
     if (m_result == Result::Ongoing)
         maybeTriggerAI();
 }
@@ -295,11 +311,19 @@ bool GameController::loadFen(const QString &fen)
     m_resultReason.clear();
     m_hasPendingPromotion = false;
     m_aiRetryCount = 0;
+    m_aiLastError.clear();
+    m_aiPendingMessage.clear();
+
+    // AI vs AI：恢复后回到 Stopped，等待用户点击 Start
+    if (m_aiVsAiMode) {
+        m_aiVsAiState = AIVsAIState::Stopped;
+        emit aiVsAiStateChanged(false, false);
+    }
 
     emit gameReset();
     emit gameStateChanged();
 
-    // 若当前回合为 AI，触发 AI 走法
+    // 若当前回合为 AI（Human vs AI），触发 AI 走法
     if (m_result == Result::Ongoing)
         maybeTriggerAI();
     return true;
@@ -345,9 +369,59 @@ void GameController::setAIGame(bool whiteIsAI, bool blackIsAI,
     m_whiteProvider = whiteProvider;
     m_blackProvider = blackProvider;
     m_aiRetryCount = 0;
+    m_aiLastError.clear();
+    m_aiPendingMessage.clear();
     m_aiThinking = false;
     m_aiThinkingName.clear();
     m_aiThinkingModel.clear();
+
+    // AI vs AI 模式：双方均为 AI
+    m_aiVsAiMode = whiteIsAI && blackIsAI;
+    m_aiVsAiState = AIVsAIState::Stopped;
+}
+
+// ---- AI vs AI 控制 ----
+
+void GameController::startAIVsAI()
+{
+    if (!m_aiVsAiMode)
+        return;
+    m_aiVsAiState = AIVsAIState::Running;
+    emit aiVsAiStateChanged(true, false);
+    // 若当前回合为 AI 且对局未结束，触发 AI 走第一步
+    if (m_result == Result::Ongoing)
+        maybeTriggerAI();
+}
+
+void GameController::pauseAIVsAI()
+{
+    if (!m_aiVsAiMode || m_aiVsAiState != AIVsAIState::Running)
+        return;
+    m_aiVsAiState = AIVsAIState::Paused;
+    emit aiVsAiStateChanged(true, true);
+    // 不取消当前请求：若已有请求在途，允许其完成并执行，但不再发起下一步
+}
+
+void GameController::resumeAIVsAI()
+{
+    if (!m_aiVsAiMode || m_aiVsAiState != AIVsAIState::Paused)
+        return;
+    m_aiVsAiState = AIVsAIState::Running;
+    emit aiVsAiStateChanged(true, false);
+    // 若当前回合为 AI 且对局未结束，继续触发
+    if (m_result == Result::Ongoing)
+        maybeTriggerAI();
+}
+
+void GameController::stopAIVsAI()
+{
+    if (!m_aiVsAiMode)
+        return;
+    // 取消当前请求（若有）
+    if (m_aiThinking)
+        cancelAI();
+    m_aiVsAiState = AIVsAIState::Stopped;
+    emit aiVsAiStateChanged(false, false);
 }
 
 bool GameController::isCurrentTurnAI() const
@@ -367,6 +441,8 @@ void GameController::cancelAI()
     m_aiThinkingName.clear();
     m_aiThinkingModel.clear();
     m_aiRetryCount = 0;
+    m_aiLastError.clear();
+    m_aiPendingMessage.clear();
     emit aiThinkingChanged(false, QString(), QString());
 }
 
@@ -389,6 +465,10 @@ void GameController::maybeTriggerAI()
     if (m_result != Result::Ongoing || !isCurrentTurnAI())
         return;
     if (!m_aiManager)
+        return;
+
+    // AI vs AI 模式下，仅当处于 Running 状态才发起新请求
+    if (m_aiVsAiMode && m_aiVsAiState != AIVsAIState::Running)
         return;
 
     const AIProvider *provider = currentAIProvider();
@@ -418,8 +498,8 @@ void GameController::maybeTriggerAI()
     m_aiThinkingModel = provider->model;
     emit aiThinkingChanged(true, m_aiThinkingName, m_aiThinkingModel);
 
-    // 发起异步请求
-    if (!m_aiManager->requestMove(*provider, m_state.toFen(), turn, uciHistory, legalMoves)) {
+    // 发起异步请求（携带上次选错的走法反馈，用于自动调教重试）
+    if (!m_aiManager->requestMove(*provider, m_state.toFen(), turn, uciHistory, legalMoves, m_aiLastError)) {
         // 请求发起失败（如 Python 未安装）
         m_aiThinking = false;
         m_aiThinkingName.clear();
@@ -429,7 +509,7 @@ void GameController::maybeTriggerAI()
     }
 }
 
-void GameController::onAIMoveReady(const QString &uciMove)
+void GameController::onAIMoveReady(const QString &uciMove, const QString &message)
 {
     m_aiThinking = false;
     m_aiThinkingName.clear();
@@ -445,11 +525,13 @@ void GameController::onAIMoveReady(const QString &uciMove)
     if (!move.isValid())
         move = resolveMoveFromSan(uciMove);
     if (!move.isValid()) {
-        // 非法走法：重试
+        // 非法走法：记录反馈并自动重试（把所有规则重新扔给 AI 调教，直到输出正确）
+        m_aiLastError = uciMove;
         ++m_aiRetryCount;
-        if (m_aiRetryCount >= 3) {
-            emit aiRequestFailed(QStringLiteral("AI 返回了无效的走法。"));
+        if (m_aiRetryCount >= 5) {
+            emit aiRequestFailed(QStringLiteral("AI 连续多次返回无效走法，已停止。"));
             m_aiRetryCount = 0;
+            m_aiLastError.clear();
             return;
         }
         maybeTriggerAI();
@@ -470,11 +552,13 @@ void GameController::onAIMoveReady(const QString &uciMove)
     }
 
     if (!isLegal) {
-        // 非法走法：重试
+        // 非法走法：记录反馈并自动重试（把所有规则重新扔给 AI 调教，直到输出正确）
+        m_aiLastError = uciMove;
         ++m_aiRetryCount;
-        if (m_aiRetryCount >= 3) {
-            emit aiRequestFailed(QStringLiteral("AI 返回了无效的走法。"));
+        if (m_aiRetryCount >= 5) {
+            emit aiRequestFailed(QStringLiteral("AI 连续多次返回无效走法，已停止。"));
             m_aiRetryCount = 0;
+            m_aiLastError.clear();
             return;
         }
         maybeTriggerAI();
@@ -483,6 +567,9 @@ void GameController::onAIMoveReady(const QString &uciMove)
 
     // 合法走法：执行
     m_aiRetryCount = 0;
+    m_aiLastError.clear();
+    m_aiPendingMessage = message;
+    m_aiPendingMessageColor = m_state.turn(); // 当前回合方即刚走子的 AI
     applyMove(move);
 }
 

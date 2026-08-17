@@ -28,9 +28,12 @@ public:
     // turn:     当前回合（"white" / "black"）
     // moveHistory: 已走的 UCI 走法列表
     // legalMoves: 当前方所有合法走法（UCI 格式），AI 必须从中选择一个
+    // lastError: 上次 AI 选错的走法反馈（空表示首次请求）。用于自动调教重试，
+    //            让 AI 知道上次选错了，重新从合法列表选一个不同的。
     bool requestMove(const AIProvider &provider, const QString &fen,
                      const QString &turn, const QStringList &moveHistory,
-                     const QStringList &legalMoves);
+                     const QStringList &legalMoves,
+                     const QString &lastError = QString());
 
     // 取消当前请求
     void cancel();
@@ -48,8 +51,8 @@ public:
     void setTimeoutMs(int ms) { m_timeoutMs = ms; }
 
 signals:
-    // AI 返回了一个 UCI 走法（尚未验证合法性）
-    void moveReady(const QString &uciMove);
+    // AI 返回了一个 UCI 走法（尚未验证合法性）及一句聊天内容（可能为空）
+    void moveReady(const QString &uciMove, const QString &message);
 
     // 请求失败（网络错误、超时、Python 崩溃、JSON 解析失败等）
     void failed(const QString &error);

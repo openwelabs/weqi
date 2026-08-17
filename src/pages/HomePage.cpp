@@ -280,8 +280,7 @@ QWidget *HomePage::createGameModesCard()
         { QStringLiteral("人机对战"), QStringLiteral("与 AI 对弈"),
           [this]() { m_window->showAIOpponent(); } },
         { QStringLiteral("AI 对战"), QStringLiteral("AI 与 AI 对弈"),
-          [this]() { m_window->startGame(GameMode::AIVsAI, QStringLiteral("AI"),
-                                          QStringLiteral("AI 白"), QStringLiteral("AI 黑")); } },
+          [this]() { m_window->showAIVsAI(); } },
         { QStringLiteral("复盘"), QStringLiteral("查看历史对局"),
           [this]() { m_window->showHistory(); } },
     };

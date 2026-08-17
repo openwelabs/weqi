@@ -31,4 +31,19 @@ check("空串", "", None)
 check("非法走法", "z9z9", None)
 check("自然语言", "I think white is winning", None)
 
+# ---- JSON 格式（move + message）----
+def check_json(name, raw, expected_move, expected_message):
+    result = parse_ai_response(raw)
+    assert result["ok"] is True, f"{name}: 应成功，实际 {result}"
+    assert result["move"] == expected_move, f"{name}: move 期望 {expected_move}，实际 {result}"
+    assert result.get("message", "") == expected_message, \
+        f"{name}: message 期望 {expected_message!r}，实际 {result.get('message')!r}"
+    print(f"PASS {name}: move={result['move']} message={result['message']!r}")
+
+check_json("JSON完整", '{"move": "e7e5", "message": "哈哈，你这一步有点东西。"}', "e7e5", "哈哈，你这一步有点东西。")
+check_json("JSON无message", '{"move": "e2e4"}', "e2e4", "")
+check_json("JSON带代码块", '```json\n{"move": "g1f3", "message": "将军！"}\n```', "g1f3", "将军！")
+check_json("JSON升变", '{"move": "e7e8q", "message": "升变！"}', "e7e8q", "升变！")
+check_json("JSON带解释前缀", '我选择 e2e4。{"move": "e2e4", "message": "走这里"}', "e2e4", "走这里")
+
 print("\n全部通过")

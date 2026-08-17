@@ -102,13 +102,15 @@ def main():
             break
         print(f"  合法走法数: {len(legal_moves)}")
 
-        # 请求 AI 走法，最多重试 3 次
+        # 请求 AI 走法，最多重试 3 次；每次非法走法都把 last_error 反馈给 AI 调教
         move = None
+        last_error = ""
         for attempt in range(1, 4):
             try:
                 raw = request_move(
                     provider["baseUrl"], provider["apiKey"], provider["model"],
-                    fen, turn, move_history, legal_moves, timeout=60.0,
+                    fen, turn, move_history, legal_moves,
+                    last_error=last_error, timeout=60.0,
                 )
             except OpenAICompatibleError as e:
                 print(f"  [请求失败] {e}")
@@ -120,6 +122,7 @@ def main():
                 print(f"  [解析失败] raw={raw!r}")
                 stats["illegal"] += 1
                 illegal_moves.append((ply, turn, raw, "parse_failed"))
+                last_error = raw
                 continue
 
             move = result["move"]
@@ -129,6 +132,7 @@ def main():
                 stats["illegal"] += 1
                 stats["retries"] += 1
                 illegal_moves.append((ply, turn, move, "not_in_legal_list"))
+                last_error = move
                 move = None
                 continue
 
@@ -144,6 +148,7 @@ def main():
                 stats["illegal"] += 1
                 stats["retries"] += 1
                 illegal_moves.append((ply, turn, move, reason))
+                last_error = move
                 move = None
         else:
             print(f"  [失败] 3 次重试后仍无合法走法，对局终止")

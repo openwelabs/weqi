@@ -11,10 +11,10 @@
 
 namespace {
 
-// 从 JSON 响应中提取 UCI 走法。
-// 成功：{"ok": true, "move": "e2e4"}
+// 从 JSON 响应中提取 UCI 走法与聊天内容。
+// 成功：{"ok": true, "move": "e2e4", "message": "..."}
 // 失败：{"ok": false, "error": "..."}
-bool parseMoveResponse(const QByteArray &data, QString &move, QString &error)
+bool parseMoveResponse(const QByteArray &data, QString &move, QString &message, QString &error)
 {
     QJsonParseError parseError;
     const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
@@ -34,6 +34,8 @@ bool parseMoveResponse(const QByteArray &data, QString &move, QString &error)
         error = QStringLiteral("AI 未返回走法");
         return false;
     }
+
+    message = obj.value(QStringLiteral("message")).toString();
     return true;
 }
 
@@ -54,7 +56,8 @@ AIManager::AIManager(QObject *parent)
 
 bool AIManager::requestMove(const AIProvider &provider, const QString &fen,
                             const QString &turn, const QStringList &moveHistory,
-                            const QStringList &legalMoves)
+                            const QStringList &legalMoves,
+                            const QString &lastError)
 {
     if (m_busy)
         return false;
@@ -78,6 +81,10 @@ bool AIManager::requestMove(const AIProvider &provider, const QString &fen,
     for (const QString &m : legalMoves)
         legalArr.append(m);
     gameObj[QStringLiteral("legal_moves")] = legalArr;
+
+    // 上次 AI 选错的走法反馈（用于自动调教重试）
+    if (!lastError.isEmpty())
+        gameObj[QStringLiteral("last_error")] = lastError;
 
     QJsonObject request;
     request[QStringLiteral("action")] = QStringLiteral("get_ai_move");
@@ -138,9 +145,10 @@ void AIManager::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
 
     // 解析输出
     QString move;
+    QString message;
     QString error;
-    if (parseMoveResponse(output, move, error)) {
-        emit moveReady(move);
+    if (parseMoveResponse(output, move, message, error)) {
+        emit moveReady(move, message);
     } else {
         emit failed(error);
     }
