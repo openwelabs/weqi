@@ -68,13 +68,26 @@ QString inputStyle()
 
 QString comboStyle()
 {
+    // 下拉箭头：内联 SVG（白色三角），避免深色背景下默认箭头不可见
+    const QString arrow = QStringLiteral(
+        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'>"
+        "<path d='M1 1l5 5 5-5' stroke='%1' stroke-width='2' fill='none' stroke-linecap='round'/>"
+        "</svg>").arg(kMutedText.name());
     return QStringLiteral(
         "QComboBox { background-color: %1; color: %2; border: 1px solid %3;"
         " border-radius: 10px; padding: 10px 12px; font-size: 14px; }"
-        "QComboBox::drop-down { border: none; width: 24px; }"
+        "QComboBox:hover { border-color: %4; }"
+        "QComboBox:focus { border-color: %4; }"
+        "QComboBox::drop-down { border: none; width: 28px;"
+        " subcontrol-origin: padding; subcontrol-position: center right; }"
+        "QComboBox::down-arrow { image: url(%5); width: 12px; height: 8px; }"
         "QComboBox QAbstractItemView { background-color: %1; color: %2;"
-        " border: 1px solid %3; selection-background-color: %4; }")
-        .arg(kPanelBg.name()).arg(kTitleColor.name()).arg(kDivider.name()).arg(kAccent.name());
+        " border: 1px solid %3; border-radius: 8px; padding: 4px;"
+        " selection-background-color: %6; selection-color: %2; outline: none; }"
+        "QComboBox QAbstractItemView::item { padding: 8px 10px; border-radius: 6px; }"
+        "QComboBox QAbstractItemView::item:hover { background-color: %7; }")
+        .arg(kPanelBg.name()).arg(kTitleColor.name()).arg(kDivider.name())
+        .arg(kAccent.name()).arg(arrow).arg(kAccentSoft.name()).arg(kAccentSoft.name());
 }
 
 QWidget *createCard(QWidget *parent)
