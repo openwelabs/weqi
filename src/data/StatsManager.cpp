@@ -27,7 +27,7 @@ void StatsManager::refresh()
     }
 
     const QVector<GameRecord> &records = m_history->records();
-    s.gamesPlayed = records.size();
+    s.gamesPlayed = 0;
 
     // 当前连胜/连败：从最新记录往前数，直到结果变化
     int streak = 0;
@@ -37,7 +37,12 @@ void StatsManager::refresh()
     int curLoss = 0;
 
     for (int i = 0; i < records.size(); ++i) {
-        const GameOutcome o = records.at(i).outcome;
+        const GameRecord &rec = records.at(i);
+        // AI vs AI 对局不计入玩家战绩（仅作历史记录）
+        if (rec.mode == GameMode::AIVsAI)
+            continue;
+        ++s.gamesPlayed;
+        const GameOutcome o = rec.outcome;
         if (o == GameOutcome::Win) {
             ++s.wins;
             ++curWin;
@@ -60,19 +65,24 @@ void StatsManager::refresh()
     s.bestWinStreak = bestWin;
     s.bestLossStreak = bestLoss;
 
-    // 当前连胜/连败：从最新记录开始
-    if (!records.isEmpty()) {
-        const GameOutcome latest = records.first().outcome;
+    // 当前连胜/连败：从最新记录开始（跳过 AI vs AI 记录）
+    for (int i = 0; i < records.size(); ++i) {
+        if (records.at(i).mode == GameMode::AIVsAI)
+            continue;
+        const GameOutcome latest = records.at(i).outcome;
         if (latest == GameOutcome::Win || latest == GameOutcome::Loss) {
             int count = 0;
-            for (int i = 0; i < records.size(); ++i) {
-                if (records.at(i).outcome == latest)
+            for (int j = i; j < records.size(); ++j) {
+                if (records.at(j).mode == GameMode::AIVsAI)
+                    continue;
+                if (records.at(j).outcome == latest)
                     ++count;
                 else
                     break;
             }
             streak = (latest == GameOutcome::Win) ? count : -count;
         }
+        break;
     }
     s.currentStreak = streak;
 

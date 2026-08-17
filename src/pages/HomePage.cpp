@@ -410,13 +410,16 @@ QWidget *HomePage::createRecentGamesCard()
         info->setStyleSheet(QStringLiteral("color: %1; font-size: 13px;").arg(UiTheme::kTitleColor.name()));
         rowLayout->addWidget(info, 1);
 
-        // 结果
+        // 结果（AI vs AI 不计入玩家战绩，仅显示 resultText 作汇报，不标红）
         QColor resultColor = UiTheme::kMutedText;
         if (rec.outcome == GameOutcome::Win)
             resultColor = UiTheme::kWin;
         else if (rec.outcome == GameOutcome::Loss)
             resultColor = UiTheme::kDanger;
-        auto *result = new QLabel(QStringLiteral("%1 %2").arg(outcomeText(rec.outcome), rec.resultText), row);
+        const QString resultLabel = (rec.mode == GameMode::AIVsAI)
+                                        ? rec.resultText
+                                        : QStringLiteral("%1 %2").arg(outcomeText(rec.outcome), rec.resultText);
+        auto *result = new QLabel(resultLabel, row);
         result->setStyleSheet(QStringLiteral("color: %1; font-size: 13px; font-weight: bold;").arg(resultColor.name()));
         rowLayout->addWidget(result);
 

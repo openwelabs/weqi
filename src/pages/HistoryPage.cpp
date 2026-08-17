@@ -107,11 +107,15 @@ void HistoryPage::refresh()
     m_list->setVisible(!empty);
 
     for (const GameRecord &rec : records) {
+        // AI vs AI 不计入玩家战绩，胜负仅作汇报（显示 resultText，不显示玩家视角胜负）
+        const QString outcome = (rec.mode == GameMode::AIVsAI)
+                                    ? QString()
+                                    : outcomeText(rec.outcome);
         QString line = QStringLiteral("%1  %2  %3  %4  %5")
                            .arg(rec.date.toString(QStringLiteral("yyyy-MM-dd HH:mm")),
                                 modeText(rec.mode),
                                 rec.opponent,
-                                outcomeText(rec.outcome),
+                                outcome,
                                 rec.resultText);
         // AI 对局：附加 AI 模型信息
         if (rec.mode == GameMode::HumanVsAI) {

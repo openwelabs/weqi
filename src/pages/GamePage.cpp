@@ -1051,11 +1051,16 @@ void GamePage::saveGame(GameController::Result result, const QString &reason)
     switch (result) {
     case GameController::Result::WhiteWin:
         record.resultText = QStringLiteral("1-0");
-        record.outcome = playerIsWhite ? GameOutcome::Win : GameOutcome::Loss;
+        // AI vs AI 不计入玩家战绩，胜负仅作汇报（outcome 保持 Ongoing）
+        record.outcome = (m_mode == GameMode::AIVsAI)
+                             ? GameOutcome::Ongoing
+                             : (playerIsWhite ? GameOutcome::Win : GameOutcome::Loss);
         break;
     case GameController::Result::BlackWin:
         record.resultText = QStringLiteral("0-1");
-        record.outcome = playerIsWhite ? GameOutcome::Loss : GameOutcome::Win;
+        record.outcome = (m_mode == GameMode::AIVsAI)
+                             ? GameOutcome::Ongoing
+                             : (playerIsWhite ? GameOutcome::Loss : GameOutcome::Win);
         break;
     case GameController::Result::Draw:
         record.resultText = QStringLiteral("½-½");
