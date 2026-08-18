@@ -83,6 +83,7 @@ def main() -> int:
     move_history = game.get("move_history", []) or []
     legal_moves = game.get("legal_moves", []) or []
     last_error = game.get("last_error", "") or ""
+    language = game.get("language", "en") or "en"
 
     if not fen:
         _write_response({"ok": False, "error": "missing_fen"})
@@ -90,7 +91,7 @@ def main() -> int:
 
     try:
         raw = request_move(base_url, api_key, model, fen, turn, move_history,
-                           legal_moves, last_error=last_error)
+                           legal_moves, last_error=last_error, language=language)
     except OpenAICompatibleError as e:
         _write_response({"ok": False, "error": str(e)})
         return 1
