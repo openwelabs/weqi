@@ -105,7 +105,7 @@ void GameController::evaluateResult()
     int kingRow, kingCol;
     if (!m_state.findKing(opponent, kingRow, kingCol)) {
         m_result = (turn == PieceColor::White) ? Result::WhiteWin : Result::BlackWin;
-        m_resultReason = QStringLiteral("王被吃");
+        m_resultReason = QStringLiteral("King captured");
         emit gameOver(m_result, m_resultReason);
         return;
     }
@@ -113,7 +113,7 @@ void GameController::evaluateResult()
     // 将死
     if (ChessRules::isCheckmate(m_state, turn)) {
         m_result = (turn == PieceColor::White) ? Result::BlackWin : Result::WhiteWin;
-        m_resultReason = QStringLiteral("将死");
+        m_resultReason = QStringLiteral("Checkmate");
         emit gameOver(m_result, m_resultReason);
         return;
     }
@@ -121,7 +121,7 @@ void GameController::evaluateResult()
     // 逼和
     if (ChessRules::isStalemate(m_state, turn)) {
         m_result = Result::Draw;
-        m_resultReason = QStringLiteral("逼和（无子可动）");
+        m_resultReason = QStringLiteral("Stalemate");
         emit gameOver(m_result, m_resultReason);
         return;
     }
@@ -129,7 +129,7 @@ void GameController::evaluateResult()
     // 五十回合规则
     if (m_state.halfmoveClock() >= 100) {
         m_result = Result::Draw;
-        m_resultReason = QStringLiteral("五十回合规则");
+        m_resultReason = QStringLiteral("Fifty-move rule");
         emit gameOver(m_result, m_resultReason);
         return;
     }
@@ -137,7 +137,7 @@ void GameController::evaluateResult()
     // 三次重复
     if (isThreefoldRepetition()) {
         m_result = Result::Draw;
-        m_resultReason = QStringLiteral("三次重复局面");
+        m_resultReason = QStringLiteral("Threefold repetition");
         emit gameOver(m_result, m_resultReason);
         return;
     }
@@ -145,7 +145,7 @@ void GameController::evaluateResult()
     // 无子可胜
     if (isInsufficientMaterial()) {
         m_result = Result::Draw;
-        m_resultReason = QStringLiteral("无子可胜");
+        m_resultReason = QStringLiteral("Insufficient material");
         emit gameOver(m_result, m_resultReason);
         return;
     }
@@ -332,12 +332,29 @@ bool GameController::loadFen(const QString &fen)
 QString GameController::statusText() const
 {
     if (m_result != Result::Ongoing)
-        return m_resultReason;
+        return resultReasonText(m_resultReason);
 
     if (isInCheck())
-        return QStringLiteral("Check!");
+        return tr("Check!");
 
-    return QStringLiteral("进行中");
+    return tr("进行中");
+}
+
+QString GameController::resultReasonText(const QString &key)
+{
+    if (key == QStringLiteral("Checkmate"))
+        return tr("将死");
+    if (key == QStringLiteral("Stalemate"))
+        return tr("逼和（无子可动）");
+    if (key == QStringLiteral("Fifty-move rule"))
+        return tr("五十回合规则");
+    if (key == QStringLiteral("Threefold repetition"))
+        return tr("三次重复局面");
+    if (key == QStringLiteral("Insufficient material"))
+        return tr("无子可胜");
+    if (key == QStringLiteral("King captured"))
+        return tr("王被吃");
+    return key;
 }
 
 // ---- AI 集成 ----
@@ -358,6 +375,11 @@ void GameController::setAIManager(AIManager *manager)
         connect(m_aiManager, &AIManager::failed,
                 this, &GameController::onAIFailed);
     }
+}
+
+void GameController::setUiLanguage(const QString &code)
+{
+    m_uiLanguage = code;
 }
 
 void GameController::setAIGame(bool whiteIsAI, bool blackIsAI,
@@ -498,8 +520,8 @@ void GameController::maybeTriggerAI()
     m_aiThinkingModel = provider->model;
     emit aiThinkingChanged(true, m_aiThinkingName, m_aiThinkingModel);
 
-    // 发起异步请求（携带上次选错的走法反馈，用于自动调教重试）
-    if (!m_aiManager->requestMove(*provider, m_state.toFen(), turn, uciHistory, legalMoves, m_aiLastError)) {
+    // 发起异步请求（携带上次选错的走法反馈，用于自动调教重试；以及当前界面语言）
+    if (!m_aiManager->requestMove(*provider, m_state.toFen(), turn, uciHistory, legalMoves, m_aiLastError, m_uiLanguage)) {
         // 请求发起失败（如 Python 未安装）
         m_aiThinking = false;
         m_aiThinkingName.clear();

@@ -18,6 +18,7 @@
 #include <QDir>
 #include <QDateTime>
 #include <QTimer>
+#include <QEvent>
 
 #include "MainWindow.h"
 #include "ChessBoard.h"
@@ -72,12 +73,12 @@ void GamePage::setupUi()
     headerLayout->setContentsMargins(0, 0, 0, 0);
     headerLayout->setSpacing(14);
 
-    auto *backBtn = UiTheme::createGhostButton(QStringLiteral("← 首页"), header);
-    connect(backBtn, &QPushButton::clicked, this, &GamePage::goHome);
-    headerLayout->addWidget(backBtn);
+    m_backBtn = UiTheme::createGhostButton(tr("← 首页"), header);
+    connect(m_backBtn, &QPushButton::clicked, this, &GamePage::goHome);
+    headerLayout->addWidget(m_backBtn);
 
-    auto *titleLabel = UiTheme::createTitle(QStringLiteral("对局"), 20, header);
-    headerLayout->addWidget(titleLabel);
+    m_headerTitle = UiTheme::createTitle(tr("对局"), 20, header);
+    headerLayout->addWidget(m_headerTitle);
 
     headerLayout->addStretch(1);
     rootLayout->addWidget(header);
@@ -91,18 +92,20 @@ void GamePage::setupUi()
     auto *boardLayout = new QVBoxLayout(boardContainer);
     boardLayout->setContentsMargins(0, 0, 0, 0);
     boardLayout->setSpacing(10);
-    // 白方 AI 聊天对话框（棋盘上方，默认隐藏）
-    m_aiChatDialogWhite = createAIChatDialog(PieceColor::White);
-    boardLayout->addWidget(m_aiChatDialogWhite);
     m_board = new ChessBoard(boardContainer);
     boardLayout->addWidget(m_board, 1);
-    // 黑方 AI 聊天对话框（棋盘下方，默认隐藏）
-    m_aiChatDialogBlack = createAIChatDialog(PieceColor::Black);
-    boardLayout->addWidget(m_aiChatDialogBlack);
     // AI vs AI 控制条（默认隐藏，仅 AI vs AI 模式显示）
     m_aiVsAiControls = createAIVsAIControls();
     boardLayout->addWidget(m_aiVsAiControls);
     bodyLayout->addWidget(boardContainer, 1);
+
+    // AI 聊天对话框：覆盖在棋盘上，不参与布局。
+    // 这样显示/隐藏时不会改变棋盘大小，避免韩语等长文本导致窗口尺寸反复变化。
+    m_aiChatDialogWhite = createAIChatDialog(PieceColor::White);
+    m_aiChatDialogWhite->setParent(boardContainer);
+    m_aiChatDialogBlack = createAIChatDialog(PieceColor::Black);
+    m_aiChatDialogBlack->setParent(boardContainer);
+    boardContainer->installEventFilter(this);
 
     // 右侧信息区
     bodyLayout->addWidget(createSidePanel(), 0);
@@ -139,7 +142,8 @@ void GamePage::setupUi()
 QWidget *GamePage::createSidePanel()
 {
     auto *panel = new QFrame(this);
-    panel->setFixedWidth(280);
+    // 宽度需容纳各语言下最长的按钮文本（如乌克兰语"Скасувати хід"），避免截断。
+    panel->setFixedWidth(320);
     panel->setStyleSheet(QStringLiteral(
         "QFrame { background-color: %1; border-radius: 18px; }").arg(UiTheme::kPanelBg.name()));
 
@@ -148,21 +152,24 @@ QWidget *GamePage::createSidePanel()
     layout->setSpacing(14);
 
     // 面板标题
-    auto *sectionTitle = UiTheme::createSectionLabel(QStringLiteral("对局信息"), panel);
-    layout->addWidget(sectionTitle);
+    m_sectionTitle = UiTheme::createSectionLabel(tr("对局信息"), panel);
+    layout->addWidget(m_sectionTitle);
 
     // 当前回合卡片
-    auto *turnCard = createInfoCard(QStringLiteral("当前回合"), QStringLiteral("白方"));
+    auto *turnCard = createInfoCard(tr("当前回合"), tr("白方"));
+    m_turnTitle = turnCard->findChild<QLabel *>(QStringLiteral("titleLabel"));
     m_turnValue = turnCard->findChild<QLabel *>(QStringLiteral("valueLabel"));
     layout->addWidget(turnCard);
 
     // 对局状态卡片
-    auto *statusCard = createInfoCard(QStringLiteral("对局状态"), QStringLiteral("进行中"));
+    auto *statusCard = createInfoCard(tr("对局状态"), tr("进行中"));
+    m_statusTitle = statusCard->findChild<QLabel *>(QStringLiteral("titleLabel"));
     m_statusValue = statusCard->findChild<QLabel *>(QStringLiteral("valueLabel"));
     layout->addWidget(statusCard);
 
     // 最近一步卡片
-    auto *lastMoveCard = createInfoCard(QStringLiteral("最近一步"), QStringLiteral("—"));
+    auto *lastMoveCard = createInfoCard(tr("最近一步"), QStringLiteral("—"));
+    m_lastMoveTitle = lastMoveCard->findChild<QLabel *>(QStringLiteral("titleLabel"));
     m_lastMoveValue = lastMoveCard->findChild<QLabel *>(QStringLiteral("valueLabel"));
     layout->addWidget(lastMoveCard);
 
@@ -178,11 +185,11 @@ QWidget *GamePage::createSidePanel()
     layout->addStretch(1);
 
     // 底部操作提示
-    auto *hint = new QLabel(
-        QStringLiteral("点击棋子选中，再点击目标格移动。"), panel);
-    hint->setWordWrap(true);
-    hint->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kMutedText.name()));
-    layout->addWidget(hint);
+    m_hintLabel = new QLabel(
+        tr("点击棋子选中，再点击目标格移动。"), panel);
+    m_hintLabel->setWordWrap(true);
+    m_hintLabel->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kMutedText.name()));
+    layout->addWidget(m_hintLabel);
 
     return panel;
 }
@@ -199,6 +206,7 @@ QWidget *GamePage::createInfoCard(const QString &title, const QString &value)
     layout->setSpacing(4);
 
     auto *titleLabel = new QLabel(title, card);
+    titleLabel->setObjectName(QStringLiteral("titleLabel"));
     QFont titleFont = titleLabel->font();
     titleFont.setPointSize(10);
     titleLabel->setFont(titleFont);
@@ -228,13 +236,13 @@ QWidget *GamePage::createMovePanel()
     layout->setContentsMargins(16, 12, 16, 12);
     layout->setSpacing(6);
 
-    auto *titleLabel = new QLabel(QStringLiteral("棋谱"), card);
-    QFont titleFont = titleLabel->font();
+    m_movePanelTitle = new QLabel(tr("棋谱"), card);
+    QFont titleFont = m_movePanelTitle->font();
     titleFont.setPointSize(12);
     titleFont.setBold(true);
-    titleLabel->setFont(titleFont);
-    titleLabel->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kTitleColor.name()));
-    layout->addWidget(titleLabel);
+    m_movePanelTitle->setFont(titleFont);
+    m_movePanelTitle->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kTitleColor.name()));
+    layout->addWidget(m_movePanelTitle);
 
     m_moveList = new QListWidget(card);
     m_moveList->setFixedHeight(180);
@@ -259,23 +267,23 @@ QWidget *GamePage::createActionButtons()
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
-    auto *undoBtn = new QPushButton(QStringLiteral("悔棋"), card);
-    undoBtn->setStyleSheet(QStringLiteral(
+    m_undoBtn = new QPushButton(tr("悔棋"), card);
+    m_undoBtn->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: %1; color: %2; border: none;"
         " border-radius: 10px; padding: 10px 0; font-size: 14px; font-weight: bold; }"
         "QPushButton:hover { background-color: %3; }")
         .arg(UiTheme::kAccent.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
-    connect(undoBtn, &QPushButton::clicked, this, &GamePage::onUndoClicked);
-    layout->addWidget(undoBtn, 1);
+    connect(m_undoBtn, &QPushButton::clicked, this, &GamePage::onUndoClicked);
+    layout->addWidget(m_undoBtn, 1);
 
-    auto *newGameBtn = new QPushButton(QStringLiteral("新游戏"), card);
-    newGameBtn->setStyleSheet(QStringLiteral(
+    m_newGameBtn = new QPushButton(tr("新游戏"), card);
+    m_newGameBtn->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: %1; color: %2; border: none;"
         " border-radius: 10px; padding: 10px 0; font-size: 14px; font-weight: bold; }"
         "QPushButton:hover { background-color: %3; }")
         .arg(UiTheme::kCardBg.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
-    connect(newGameBtn, &QPushButton::clicked, this, &GamePage::onNewGameClicked);
-    layout->addWidget(newGameBtn, 1);
+    connect(m_newGameBtn, &QPushButton::clicked, this, &GamePage::onNewGameClicked);
+    layout->addWidget(m_newGameBtn, 1);
 
     return card;
 }
@@ -292,14 +300,14 @@ QWidget *GamePage::createPromotionOverlay()
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(16);
 
-    auto *title = new QLabel(QStringLiteral("选择升变棋子"), overlay);
-    QFont titleFont = title->font();
+    m_promotionTitle = new QLabel(tr("选择升变棋子"), overlay);
+    QFont titleFont = m_promotionTitle->font();
     titleFont.setPointSize(16);
     titleFont.setBold(true);
-    title->setFont(titleFont);
-    title->setAlignment(Qt::AlignCenter);
-    title->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kTitleColor.name()));
-    layout->addWidget(title);
+    m_promotionTitle->setFont(titleFont);
+    m_promotionTitle->setAlignment(Qt::AlignCenter);
+    m_promotionTitle->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kTitleColor.name()));
+    layout->addWidget(m_promotionTitle);
 
     auto *row = new QHBoxLayout();
     row->setSpacing(12);
@@ -356,23 +364,23 @@ QWidget *GamePage::createSettlementOverlay()
     auto *row = new QHBoxLayout();
     row->setSpacing(12);
 
-    auto *newGameBtn = new QPushButton(QStringLiteral("新游戏"), overlay);
-    newGameBtn->setStyleSheet(QStringLiteral(
+    m_settlementNewGameBtn = new QPushButton(tr("新游戏"), overlay);
+    m_settlementNewGameBtn->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: %1; color: %2; border: none;"
         " border-radius: 10px; padding: 10px 24px; font-size: 14px; font-weight: bold; }"
         "QPushButton:hover { background-color: %3; }")
         .arg(UiTheme::kAccent.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
-    connect(newGameBtn, &QPushButton::clicked, this, &GamePage::onNewGameClicked);
-    row->addWidget(newGameBtn);
+    connect(m_settlementNewGameBtn, &QPushButton::clicked, this, &GamePage::onNewGameClicked);
+    row->addWidget(m_settlementNewGameBtn);
 
-    auto *viewBtn = new QPushButton(QStringLiteral("查看棋谱"), overlay);
-    viewBtn->setStyleSheet(QStringLiteral(
+    m_settlementViewBtn = new QPushButton(tr("查看棋谱"), overlay);
+    m_settlementViewBtn->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: %1; color: %2; border: none;"
         " border-radius: 10px; padding: 10px 24px; font-size: 14px; font-weight: bold; }"
         "QPushButton:hover { background-color: %3; }")
         .arg(UiTheme::kCardBg.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
-    connect(viewBtn, &QPushButton::clicked, this, &GamePage::onViewGameClicked);
-    row->addWidget(viewBtn);
+    connect(m_settlementViewBtn, &QPushButton::clicked, this, &GamePage::onViewGameClicked);
+    row->addWidget(m_settlementViewBtn);
 
     layout->addLayout(row);
     return overlay;
@@ -391,7 +399,7 @@ QWidget *GamePage::createAIThinkingPanel()
     layout->setSpacing(6);
 
     // 思考状态标题（带动态省略号）
-    m_aiThinkingLabel = new QLabel(QStringLiteral("AI 思考中…"), panel);
+    m_aiThinkingLabel = new QLabel(tr("AI 思考中…"), panel);
     QFont titleFont = m_aiThinkingLabel->font();
     titleFont.setPointSize(14);
     titleFont.setBold(true);
@@ -409,7 +417,7 @@ QWidget *GamePage::createAIThinkingPanel()
     layout->addWidget(m_aiThinkingModelLabel);
 
     // 取消按钮
-    m_cancelAIButton = new QPushButton(QStringLiteral("取消"), panel);
+    m_cancelAIButton = new QPushButton(tr("取消"), panel);
     m_cancelAIButton->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: %1; color: %2; border: none;"
         " border-radius: 10px; padding: 8px 0; font-size: 13px; font-weight: bold; }"
@@ -426,7 +434,7 @@ QWidget *GamePage::createAIThinkingPanel()
         QString dots;
         for (int i = 0; i < m_aiThinkingDotCount; ++i)
             dots += QChar('.');
-        m_aiThinkingLabel->setText(QStringLiteral("AI 思考中%1").arg(dots));
+        m_aiThinkingLabel->setText(tr("AI 思考中%1").arg(dots));
     });
 
     return panel;
@@ -501,19 +509,19 @@ QWidget *GamePage::createAIVsAIControls()
         return btn;
     };
 
-    m_aiVsAiStartBtn = makeBtn(QStringLiteral("开始"));
+    m_aiVsAiStartBtn = makeBtn(tr("开始"));
     connect(m_aiVsAiStartBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIStartClicked);
     layout->addWidget(m_aiVsAiStartBtn, 1);
 
-    m_aiVsAiPauseBtn = makeBtn(QStringLiteral("暂停"));
+    m_aiVsAiPauseBtn = makeBtn(tr("暂停"));
     connect(m_aiVsAiPauseBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIPauseClicked);
     layout->addWidget(m_aiVsAiPauseBtn, 1);
 
-    m_aiVsAiResumeBtn = makeBtn(QStringLiteral("继续"));
+    m_aiVsAiResumeBtn = makeBtn(tr("继续"));
     connect(m_aiVsAiResumeBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIResumeClicked);
     layout->addWidget(m_aiVsAiResumeBtn, 1);
 
-    m_aiVsAiStopBtn = makeBtn(QStringLiteral("停止"));
+    m_aiVsAiStopBtn = makeBtn(tr("停止"));
     connect(m_aiVsAiStopBtn, &QPushButton::clicked, this, &GamePage::onAIVsAIStopClicked);
     layout->addWidget(m_aiVsAiStopBtn, 1);
 
@@ -597,6 +605,99 @@ void GamePage::onShown()
     updateMovePanel();
 }
 
+bool GamePage::eventFilter(QObject *watched, QEvent *event)
+{
+    // 棋盘容器尺寸变化时，把 AI 聊天对话框覆盖在棋盘上（不参与布局，
+    // 避免显示/隐藏时改变棋盘大小，导致韩语等长文本下窗口尺寸反复变化）。
+    if (watched == m_board->parentWidget() && event->type() == QEvent::Resize) {
+        const QPoint boardTopLeft = m_board->mapTo(m_board->parentWidget(), QPoint(0, 0));
+        const QSize boardSize = m_board->size();
+        const int margin = 8;
+        if (m_aiChatDialogWhite) {
+            const int h = m_aiChatDialogWhite->sizeHint().height();
+            m_aiChatDialogWhite->setGeometry(
+                boardTopLeft.x(), boardTopLeft.y() + margin,
+                boardSize.width(), h);
+        }
+        if (m_aiChatDialogBlack) {
+            const int h = m_aiChatDialogBlack->sizeHint().height();
+            m_aiChatDialogBlack->setGeometry(
+                boardTopLeft.x(), boardTopLeft.y() + boardSize.height() - margin - h,
+                boardSize.width(), h);
+        }
+    }
+    return Page::eventFilter(watched, event);
+}
+
+void GamePage::retranslateUi()
+{
+    // 顶部标题栏
+    if (m_backBtn)
+        m_backBtn->setText(tr("← 首页"));
+    if (m_headerTitle)
+        m_headerTitle->setText(tr("对局"));
+
+    // 信息面板
+    if (m_sectionTitle)
+        m_sectionTitle->setText(tr("对局信息"));
+    if (m_turnTitle)
+        m_turnTitle->setText(tr("当前回合"));
+    if (m_statusTitle)
+        m_statusTitle->setText(tr("对局状态"));
+    if (m_lastMoveTitle)
+        m_lastMoveTitle->setText(tr("最近一步"));
+    if (m_hintLabel)
+        m_hintLabel->setText(tr("点击棋子选中，再点击目标格移动。"));
+
+    // 棋谱面板
+    if (m_movePanelTitle)
+        m_movePanelTitle->setText(tr("棋谱"));
+
+    // 操作按钮
+    if (m_undoBtn)
+        m_undoBtn->setText(tr("悔棋"));
+    if (m_newGameBtn)
+        m_newGameBtn->setText(tr("新游戏"));
+
+    // 升变覆盖层
+    if (m_promotionTitle)
+        m_promotionTitle->setText(tr("选择升变棋子"));
+
+    // 结算覆盖层按钮
+    if (m_settlementNewGameBtn)
+        m_settlementNewGameBtn->setText(tr("新游戏"));
+    if (m_settlementViewBtn)
+        m_settlementViewBtn->setText(tr("查看棋谱"));
+
+    // AI 思考面板
+    if (m_aiThinkingLabel)
+        m_aiThinkingLabel->setText(tr("AI 思考中…"));
+    if (m_cancelAIButton)
+        m_cancelAIButton->setText(tr("取消"));
+
+    // AI 失败覆盖层
+    if (m_aiErrorTitle)
+        m_aiErrorTitle->setText(tr("AI 请求失败"));
+    if (m_aiErrorRetryBtn)
+        m_aiErrorRetryBtn->setText(tr("重试"));
+    if (m_aiErrorCancelBtn)
+        m_aiErrorCancelBtn->setText(tr("取消"));
+
+    // AI vs AI 控制按钮
+    if (m_aiVsAiStartBtn)
+        m_aiVsAiStartBtn->setText(tr("开始"));
+    if (m_aiVsAiPauseBtn)
+        m_aiVsAiPauseBtn->setText(tr("暂停"));
+    if (m_aiVsAiResumeBtn)
+        m_aiVsAiResumeBtn->setText(tr("继续"));
+    if (m_aiVsAiStopBtn)
+        m_aiVsAiStopBtn->setText(tr("停止"));
+
+    // 动态值（回合/状态/最近一步）重新刷新
+    updateInfoPanel();
+    updateMovePanel();
+}
+
 // ---- 信号槽 ----
 
 void GamePage::onMoveMade(int fromRow, int fromCol, int toRow, int toCol)
@@ -669,8 +770,8 @@ void GamePage::onNewGameClicked()
     }
 
     const auto ret = QMessageBox::question(
-        this, QStringLiteral("新游戏"),
-        QStringLiteral("确定要开始新游戏吗？当前对局进度将丢失。"),
+        this, tr("新游戏"),
+        tr("确定要开始新游戏吗？当前对局进度将丢失。"),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (ret == QMessageBox::Yes) {
         m_window->controller()->newGame();
@@ -699,7 +800,7 @@ void GamePage::onAIThinkingChanged(bool thinking, const QString &name, const QSt
         // 显示 AI 名称与模型
         QString modelText = model;
         if (modelText.isEmpty())
-            modelText = QStringLiteral("未知模型");
+            modelText = tr("未知模型");
         m_aiThinkingModelLabel->setText(
             QStringLiteral("%1  ·  %2").arg(name, modelText));
 
@@ -707,7 +808,7 @@ void GamePage::onAIThinkingChanged(bool thinking, const QString &name, const QSt
         // 其次模型 API 名，最后回退到 "AI"。不自动从 Provider 类型推断。
         const QString title = !name.isEmpty() ? name
                             : (!model.isEmpty() ? model
-                            : QStringLiteral("AI"));
+                            : tr("AI"));
 
         // 根据当前回合方更新对应聊天框标题
         GameController *controller = m_window->controller();
@@ -722,7 +823,7 @@ void GamePage::onAIThinkingChanged(bool thinking, const QString &name, const QSt
         }
 
         m_aiThinkingDotCount = 0;
-        m_aiThinkingLabel->setText(QStringLiteral("AI 思考中"));
+        m_aiThinkingLabel->setText(tr("AI 思考中"));
         m_aiThinkingPanel->show();
         m_aiThinkingAnimTimer->start();
     } else {
@@ -798,14 +899,14 @@ void GamePage::onAIRequestFailed(const QString &error)
         layout->setContentsMargins(32, 32, 32, 32);
         layout->setSpacing(14);
 
-        auto *title = new QLabel(QStringLiteral("AI 请求失败"), m_aiErrorOverlay);
-        QFont titleFont = title->font();
+        m_aiErrorTitle = new QLabel(tr("AI 请求失败"), m_aiErrorOverlay);
+        QFont titleFont = m_aiErrorTitle->font();
         titleFont.setPointSize(20);
         titleFont.setBold(true);
-        title->setFont(titleFont);
-        title->setAlignment(Qt::AlignCenter);
-        title->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kDanger.name()));
-        layout->addWidget(title);
+        m_aiErrorTitle->setFont(titleFont);
+        m_aiErrorTitle->setAlignment(Qt::AlignCenter);
+        m_aiErrorTitle->setStyleSheet(QStringLiteral("color: %1;").arg(UiTheme::kDanger.name()));
+        layout->addWidget(m_aiErrorTitle);
 
         m_aiErrorLabel = new QLabel(m_aiErrorOverlay);
         m_aiErrorLabel->setWordWrap(true);
@@ -816,28 +917,28 @@ void GamePage::onAIRequestFailed(const QString &error)
         auto *row = new QHBoxLayout();
         row->setSpacing(12);
 
-        auto *retryBtn = new QPushButton(QStringLiteral("重试"), m_aiErrorOverlay);
-        retryBtn->setStyleSheet(QStringLiteral(
+        m_aiErrorRetryBtn = new QPushButton(tr("重试"), m_aiErrorOverlay);
+        m_aiErrorRetryBtn->setStyleSheet(QStringLiteral(
             "QPushButton { background-color: %1; color: %2; border: none;"
             " border-radius: 10px; padding: 10px 24px; font-size: 14px; font-weight: bold; }"
             "QPushButton:hover { background-color: %3; }")
             .arg(UiTheme::kAccent.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
-        connect(retryBtn, &QPushButton::clicked, this, &GamePage::onRetryAIClicked);
-        row->addWidget(retryBtn);
+        connect(m_aiErrorRetryBtn, &QPushButton::clicked, this, &GamePage::onRetryAIClicked);
+        row->addWidget(m_aiErrorRetryBtn);
 
-        auto *cancelBtn = new QPushButton(QStringLiteral("取消"), m_aiErrorOverlay);
-        cancelBtn->setStyleSheet(QStringLiteral(
+        m_aiErrorCancelBtn = new QPushButton(tr("取消"), m_aiErrorOverlay);
+        m_aiErrorCancelBtn->setStyleSheet(QStringLiteral(
             "QPushButton { background-color: %1; color: %2; border: none;"
             " border-radius: 10px; padding: 10px 24px; font-size: 14px; font-weight: bold; }"
             "QPushButton:hover { background-color: %3; }")
             .arg(UiTheme::kCardBg.name()).arg(UiTheme::kTitleColor.name()).arg(UiTheme::kAccentSoft.name()));
-        connect(cancelBtn, &QPushButton::clicked, this, &GamePage::onAICancelClicked);
-        row->addWidget(cancelBtn);
+        connect(m_aiErrorCancelBtn, &QPushButton::clicked, this, &GamePage::onAICancelClicked);
+        row->addWidget(m_aiErrorCancelBtn);
 
         layout->addLayout(row);
     }
 
-    m_aiErrorLabel->setText(error.isEmpty() ? QStringLiteral("未知错误") : error);
+    m_aiErrorLabel->setText(error.isEmpty() ? tr("未知错误") : error);
 
     // 覆盖在棋盘区域中央
     const QRect boardGeo = m_board->geometry();
@@ -917,7 +1018,7 @@ void GamePage::updateInfoPanel()
     // 当前回合：显示当前回合方，若为 AI 则显示其名称（用户填写的"名称"字段）
     if (m_turnValue) {
         const bool whiteTurn = (controller->currentTurn() == PieceColor::White);
-        QString turnText = whiteTurn ? QStringLiteral("白方") : QStringLiteral("黑方");
+        QString turnText = whiteTurn ? tr("白方") : tr("黑方");
 
         // 若当前回合方为 AI，附加其名称
         if (controller->isAIVsAI()) {
@@ -981,15 +1082,15 @@ void GamePage::showSettlement(GameController::Result result, const QString &reas
     switch (result) {
     case GameController::Result::WhiteWin:
         title = QStringLiteral("CHECKMATE");
-        subtitle = QStringLiteral("白方获胜  ♔ 1-0");
+        subtitle = tr("白方获胜  ♔ 1-0");
         break;
     case GameController::Result::BlackWin:
         title = QStringLiteral("CHECKMATE");
-        subtitle = QStringLiteral("黑方获胜  ♚ 0-1");
+        subtitle = tr("黑方获胜  ♚ 0-1");
         break;
     case GameController::Result::Draw:
         title = QStringLiteral("DRAW");
-        subtitle = QStringLiteral("和棋  %1").arg(reason);
+        subtitle = tr("和棋  %1").arg(GameController::resultReasonText(reason));
         break;
     default:
         return;

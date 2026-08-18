@@ -19,6 +19,7 @@
 #include "GameHistoryManager.h"
 #include "StatsManager.h"
 #include "AIManager.h"
+#include "LanguageManager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -41,6 +42,10 @@ void MainWindow::setupManagers()
     m_settings->load();
     m_aiProviders->load();
     m_history->load();
+
+    // 语言管理（依赖 SettingsManager 持久化语言设置）
+    m_language = new LanguageManager(m_settings, this);
+    m_language->apply();
 
     // 战绩从历史动态计算
     m_stats->setHistory(m_history);
@@ -87,6 +92,17 @@ void MainWindow::setupPages()
     };
     for (Page *p : pages)
         p->setAutoFillBackground(true);
+
+    // 界面语言切换时，刷新所有页面文本，并同步 AI 聊天语言
+    connect(m_language, &LanguageManager::languageChanged, this, [this](const QString &code) {
+        const QList<Page *> allPages = {
+            m_homePage, m_newGamePage, m_aiOpponentPage, m_aiVsAiPage,
+            m_gamePage, m_historyPage, m_settingsPage, m_aboutPage
+        };
+        for (Page *p : allPages)
+            p->retranslateUi();
+        m_controller->setUiLanguage(code);
+    });
 
     m_stack->addWidget(m_homePage);
     m_stack->addWidget(m_newGamePage);

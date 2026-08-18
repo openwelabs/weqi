@@ -35,22 +35,22 @@ void AIOpponentPage::setupUi()
     headerLayout->setContentsMargins(0, 0, 0, 0);
     headerLayout->setSpacing(14);
 
-    auto *backBtn = UiTheme::createGhostButton(QStringLiteral("← 返回"), header);
-    connect(backBtn, &QPushButton::clicked, this, [this]() {
+    m_backBtn = UiTheme::createGhostButton(tr("← 返回"), header);
+    connect(m_backBtn, &QPushButton::clicked, this, [this]() {
         m_window->showNewGame();
     });
-    headerLayout->addWidget(backBtn);
+    headerLayout->addWidget(m_backBtn);
 
-    auto *title = UiTheme::createTitle(QStringLiteral("选择 AI 对手"), 24, header);
-    headerLayout->addWidget(title);
+    m_headerTitle = UiTheme::createTitle(tr("选择 AI 对手"), 24, header);
+    headerLayout->addWidget(m_headerTitle);
     headerLayout->addStretch(1);
     rootLayout->addWidget(header);
 
     // 说明
-    auto *intro = UiTheme::createMutedLabel(
-        QStringLiteral("选择要与你对弈的 AI，以及 AI 执子方。"), this);
-    intro->setWordWrap(true);
-    rootLayout->addWidget(intro);
+    m_intro = UiTheme::createMutedLabel(
+        tr("选择要与你对弈的 AI，以及 AI 执子方。"), this);
+    m_intro->setWordWrap(true);
+    rootLayout->addWidget(m_intro);
 
     // 主卡片
     auto *card = UiTheme::createCard(this);
@@ -59,8 +59,8 @@ void AIOpponentPage::setupUi()
     layout->setSpacing(14);
 
     // ---- AI Provider 列表 ----
-    auto *aiTitle = UiTheme::createSectionLabel(QStringLiteral("选择 AI"), card);
-    layout->addWidget(aiTitle);
+    m_aiTitle = UiTheme::createSectionLabel(tr("选择 AI"), card);
+    layout->addWidget(m_aiTitle);
 
     m_aiList = new QListWidget(card);
     m_aiList->setStyleSheet(QStringLiteral(
@@ -73,13 +73,13 @@ void AIOpponentPage::setupUi()
 
     // 无配置提示（默认隐藏）
     m_noConfigLabel = UiTheme::createMutedLabel(
-        QStringLiteral("尚未配置任何 AI Provider。请先在设置中配置 AI。"), card);
+        tr("尚未配置任何 AI Provider。请先在设置中配置 AI。"), card);
     m_noConfigLabel->setWordWrap(true);
     m_noConfigLabel->hide();
     layout->addWidget(m_noConfigLabel);
 
     // 配置 AI 按钮（默认隐藏）
-    m_configureBtn = UiTheme::createSecondaryButton(QStringLiteral("配置 AI"), card);
+    m_configureBtn = UiTheme::createSecondaryButton(tr("配置 AI"), card);
     m_configureBtn->setMinimumHeight(44);
     connect(m_configureBtn, &QPushButton::clicked, this, [this]() {
         m_window->showSettings();
@@ -88,30 +88,46 @@ void AIOpponentPage::setupUi()
     layout->addWidget(m_configureBtn);
 
     // ---- 执子方选择 ----
-    auto *sideTitle = UiTheme::createSectionLabel(QStringLiteral("AI 执子方"), card);
-    layout->addWidget(sideTitle);
+    m_sideTitle = UiTheme::createSectionLabel(tr("AI 执子方"), card);
+    layout->addWidget(m_sideTitle);
 
     m_sideCombo = new QComboBox(card);
-    m_sideCombo->addItem(QStringLiteral("白方（AI 执白）"), QStringLiteral("white"));
-    m_sideCombo->addItem(QStringLiteral("黑方（AI 执黑）"), QStringLiteral("black"));
-    m_sideCombo->addItem(QStringLiteral("随机"), QStringLiteral("random"));
+    m_sideCombo->addItem(tr("白方（AI 执白）"), QStringLiteral("white"));
+    m_sideCombo->addItem(tr("黑方（AI 执黑）"), QStringLiteral("black"));
+    m_sideCombo->addItem(tr("随机"), QStringLiteral("random"));
     m_sideCombo->setStyleSheet(UiTheme::comboStyle());
     m_sideCombo->setMinimumHeight(44);
     layout->addWidget(m_sideCombo);
 
     // 描述
-    m_descLabel = UiTheme::createMutedLabel(QStringLiteral("选择一个 AI 对手开始对局。"), card);
+    m_descLabel = UiTheme::createMutedLabel(tr("选择一个 AI 对手开始对局。"), card);
     m_descLabel->setWordWrap(true);
     layout->addWidget(m_descLabel);
 
     // 开始按钮
-    m_startBtn = UiTheme::createPrimaryButton(QStringLiteral("开始对局"), card);
+    m_startBtn = UiTheme::createPrimaryButton(tr("开始对局"), card);
     m_startBtn->setMinimumHeight(52);
     connect(m_startBtn, &QPushButton::clicked, this, &AIOpponentPage::startGame);
     layout->addWidget(m_startBtn);
 
     rootLayout->addWidget(card);
     rootLayout->addStretch(1);
+}
+
+void AIOpponentPage::retranslateUi()
+{
+    m_backBtn->setText(tr("← 返回"));
+    m_headerTitle->setText(tr("选择 AI 对手"));
+    m_intro->setText(tr("选择要与你对弈的 AI，以及 AI 执子方。"));
+    m_aiTitle->setText(tr("选择 AI"));
+    m_noConfigLabel->setText(tr("尚未配置任何 AI Provider。请先在设置中配置 AI。"));
+    m_configureBtn->setText(tr("配置 AI"));
+    m_sideTitle->setText(tr("AI 执子方"));
+    m_sideCombo->setItemText(0, tr("白方（AI 执白）"));
+    m_sideCombo->setItemText(1, tr("黑方（AI 执黑）"));
+    m_sideCombo->setItemText(2, tr("随机"));
+    m_descLabel->setText(tr("选择一个 AI 对手开始对局。"));
+    m_startBtn->setText(tr("开始对局"));
 }
 
 void AIOpponentPage::refreshProviderList()

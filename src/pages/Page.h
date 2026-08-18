@@ -20,6 +20,10 @@ public:
     // 页面隐藏时调用
     virtual void onHidden() {}
 
+    // 界面语言切换时调用，用于更新所有用户可见文本。
+    // 子类应重写此方法，用 tr() 重新设置各控件文本。
+    virtual void retranslateUi() {}
+
 protected:
     MainWindow *m_window = nullptr;
 };

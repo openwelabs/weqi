@@ -14,15 +14,17 @@
 #include "GameHistoryManager.h"
 #include "GameRecord.h"
 
+#include <QCoreApplication>
+
 namespace {
 
 QString modeText(GameMode mode)
 {
     switch (mode) {
-    case GameMode::HumanVsHuman: return QStringLiteral("真人对战");
-    case GameMode::HumanVsAI:    return QStringLiteral("人机对战");
-    case GameMode::AIVsAI:       return QStringLiteral("AI 对战");
-    case GameMode::Replay:       return QStringLiteral("复盘");
+    case GameMode::HumanVsHuman: return QCoreApplication::translate("HistoryPage", "真人对战");
+    case GameMode::HumanVsAI:    return QCoreApplication::translate("HistoryPage", "人机对战");
+    case GameMode::AIVsAI:       return QCoreApplication::translate("HistoryPage", "AI 对战");
+    case GameMode::Replay:       return QCoreApplication::translate("HistoryPage", "复盘");
     }
     return QString();
 }
@@ -30,10 +32,10 @@ QString modeText(GameMode mode)
 QString outcomeText(GameOutcome outcome)
 {
     switch (outcome) {
-    case GameOutcome::Win:    return QStringLiteral("胜");
-    case GameOutcome::Loss:   return QStringLiteral("负");
-    case GameOutcome::Draw:   return QStringLiteral("和");
-    case GameOutcome::Ongoing: return QStringLiteral("进行中");
+    case GameOutcome::Win:    return QCoreApplication::translate("HistoryPage", "胜");
+    case GameOutcome::Loss:   return QCoreApplication::translate("HistoryPage", "负");
+    case GameOutcome::Draw:   return QCoreApplication::translate("HistoryPage", "和");
+    case GameOutcome::Ongoing: return QCoreApplication::translate("HistoryPage", "进行中");
     }
     return QString();
 }
@@ -58,14 +60,14 @@ void HistoryPage::setupUi()
     headerLayout->setContentsMargins(0, 0, 0, 0);
     headerLayout->setSpacing(14);
 
-    auto *backBtn = UiTheme::createGhostButton(QStringLiteral("← 首页"), header);
-    connect(backBtn, &QPushButton::clicked, this, [this]() {
+    m_backBtn = UiTheme::createGhostButton(tr("← 首页"), header);
+    connect(m_backBtn, &QPushButton::clicked, this, [this]() {
         m_window->showHome();
     });
-    headerLayout->addWidget(backBtn);
+    headerLayout->addWidget(m_backBtn);
 
-    auto *title = UiTheme::createTitle(QStringLiteral("历史对局"), 24, header);
-    headerLayout->addWidget(title);
+    m_headerTitle = UiTheme::createTitle(tr("历史对局"), 24, header);
+    headerLayout->addWidget(m_headerTitle);
     headerLayout->addStretch(1);
     rootLayout->addWidget(header);
 
@@ -75,7 +77,7 @@ void HistoryPage::setupUi()
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(14);
 
-    m_emptyLabel = UiTheme::createMutedLabel(QStringLiteral("还没有对局记录。"), card);
+    m_emptyLabel = UiTheme::createMutedLabel(tr("还没有对局记录。"), card);
     m_emptyLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(m_emptyLabel);
 
@@ -94,6 +96,14 @@ void HistoryPage::setupUi()
 
 void HistoryPage::onShown()
 {
+    refresh();
+}
+
+void HistoryPage::retranslateUi()
+{
+    m_backBtn->setText(tr("← 首页"));
+    m_headerTitle->setText(tr("历史对局"));
+    m_emptyLabel->setText(tr("还没有对局记录。"));
     refresh();
 }
 

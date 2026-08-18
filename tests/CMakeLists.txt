@@ -36,5 +36,40 @@ target_include_directories(test_movement PRIVATE
 )
 target_link_libraries(test_movement PRIVATE Qt6::Widgets Qt6::Test)
 
+# 国际化测试：验证语言列表/显示、手动选择、持久化、跟随系统、
+# 对局中途切换语言不丢状态、AI 模型名称不被翻译。
+qt_add_executable(test_i18n
+    test_i18n.cpp
+    ../src/GameState.cpp
+    ../src/GameState.h
+    ../src/ChessRules.cpp
+    ../src/ChessRules.h
+    ../src/Move.h
+    ../src/MoveHistory.cpp
+    ../src/MoveHistory.h
+    ../src/GameController.cpp
+    ../src/GameController.h
+    ../src/ChessPiece.cpp
+    ../src/ChessPiece.h
+    ../src/data/AIProviderManager.cpp
+    ../src/data/AIProviderManager.h
+    ../src/data/DataPaths.cpp
+    ../src/data/DataPaths.h
+    ../src/data/SettingsManager.cpp
+    ../src/data/SettingsManager.h
+    ../src/data/LanguageManager.cpp
+    ../src/data/LanguageManager.h
+    ../src/ai/AIManager.cpp
+    ../src/ai/AIManager.h
+)
+
+target_include_directories(test_i18n PRIVATE
+    ../src
+    ../src/data
+    ../src/ai
+)
+target_link_libraries(test_i18n PRIVATE Qt6::Widgets Qt6::Test)
+
 enable_testing()
 add_test(NAME movement COMMAND test_movement)
+add_test(NAME i18n COMMAND test_i18n)

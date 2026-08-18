@@ -16,6 +16,7 @@ public:
     explicit AIVsAIPage(MainWindow *window, QWidget *parent = nullptr);
 
     void onShown() override;
+    void retranslateUi() override;
 
 private:
     void setupUi();
@@ -26,7 +27,12 @@ private:
     QString currentWhiteProviderId() const;
     QString currentBlackProviderId() const;
 
+    QPushButton *m_backBtn = nullptr;
+    QLabel *m_headerTitle = nullptr;
+    QLabel *m_intro = nullptr;
+    QLabel *m_whiteTitle = nullptr;
     QListWidget *m_whiteList = nullptr;
+    QLabel *m_blackTitle = nullptr;
     QListWidget *m_blackList = nullptr;
     QLabel *m_noConfigLabel = nullptr;
     QPushButton *m_configureBtn = nullptr;

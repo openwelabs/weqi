@@ -30,10 +30,13 @@ public:
     // legalMoves: 当前方所有合法走法（UCI 格式），AI 必须从中选择一个
     // lastError: 上次 AI 选错的走法反馈（空表示首次请求）。用于自动调教重试，
     //            让 AI 知道上次选错了，重新从合法列表选一个不同的。
+    // language: 当前界面语言代码（zh-CN/zh-TW/en/ja/es/uk/ko）。
+    //           聊天内容（message）必须用该语言生成。
     bool requestMove(const AIProvider &provider, const QString &fen,
                      const QString &turn, const QStringList &moveHistory,
                      const QStringList &legalMoves,
-                     const QString &lastError = QString());
+                     const QString &lastError = QString(),
+                     const QString &language = QStringLiteral("en"));
 
     // 取消当前请求
     void cancel();

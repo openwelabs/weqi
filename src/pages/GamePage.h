@@ -33,6 +33,8 @@ public:
     void goHome();
 
     void onShown() override;
+    void retranslateUi() override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void setupUi();
@@ -92,13 +94,34 @@ private:
 
     ChessBoard *m_board = nullptr;
 
+    // 顶部标题栏
+    QPushButton *m_backBtn = nullptr;
+    QLabel *m_headerTitle = nullptr;
+
     // 信息面板控件
+    QLabel *m_sectionTitle = nullptr;
+    QLabel *m_turnTitle = nullptr;
+    QLabel *m_statusTitle = nullptr;
+    QLabel *m_lastMoveTitle = nullptr;
     QLabel *m_turnValue = nullptr;
     QLabel *m_statusValue = nullptr;
     QLabel *m_lastMoveValue = nullptr;
+    QLabel *m_hintLabel = nullptr;
 
     // 棋谱面板
     QListWidget *m_moveList = nullptr;
+    QLabel *m_movePanelTitle = nullptr;
+
+    // 操作按钮
+    QPushButton *m_undoBtn = nullptr;
+    QPushButton *m_newGameBtn = nullptr;
+
+    // 升变覆盖层标题
+    QLabel *m_promotionTitle = nullptr;
+
+    // 结算覆盖层按钮
+    QPushButton *m_settlementNewGameBtn = nullptr;
+    QPushButton *m_settlementViewBtn = nullptr;
 
     // AI 思考面板
     QWidget *m_aiThinkingPanel = nullptr;
@@ -128,7 +151,10 @@ private:
 
     // AI 失败对话框（用于重试/取消）
     QWidget *m_aiErrorOverlay = nullptr;
+    QLabel *m_aiErrorTitle = nullptr;
     QLabel *m_aiErrorLabel = nullptr;
+    QPushButton *m_aiErrorRetryBtn = nullptr;
+    QPushButton *m_aiErrorCancelBtn = nullptr;
     QString m_lastAIError;
 
     // 升变覆盖层

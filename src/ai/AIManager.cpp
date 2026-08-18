@@ -57,7 +57,8 @@ AIManager::AIManager(QObject *parent)
 bool AIManager::requestMove(const AIProvider &provider, const QString &fen,
                             const QString &turn, const QStringList &moveHistory,
                             const QStringList &legalMoves,
-                            const QString &lastError)
+                            const QString &lastError,
+                            const QString &language)
 {
     if (m_busy)
         return false;
@@ -85,6 +86,9 @@ bool AIManager::requestMove(const AIProvider &provider, const QString &fen,
     // 上次 AI 选错的走法反馈（用于自动调教重试）
     if (!lastError.isEmpty())
         gameObj[QStringLiteral("last_error")] = lastError;
+
+    // 当前界面语言（用于 AI 聊天内容生成）
+    gameObj[QStringLiteral("language")] = language;
 
     QJsonObject request;
     request[QStringLiteral("action")] = QStringLiteral("get_ai_move");

@@ -66,10 +66,18 @@ public:
     // 当前将军/将死/逼和状态描述（用于状态栏）
     QString statusText() const;
 
+    // 将稳定的英文结果原因键（"Checkmate" 等）翻译为当前界面语言。
+    // 结果原因以英文键持久化，保证存档跨语言稳定，显示时再翻译。
+    static QString resultReasonText(const QString &key);
+
     // ---- AI 集成 ----
 
     // 设置 AI 管理器（由 MainWindow 注入）
     void setAIManager(AIManager *manager);
+
+    // 设置当前界面语言代码（zh-CN/zh-TW/en/ja/es/uk/ko）。
+    // 用于 AI 聊天内容生成时跟随界面语言。由 MainWindow 在语言切换时调用。
+    void setUiLanguage(const QString &code);
 
     // 设置 AI 对局配置。
     // whiteIsAI / blackIsAI: 该方是否为 AI
@@ -212,6 +220,7 @@ private:
 
     // ---- AI 状态 ----
     AIManager *m_aiManager = nullptr;
+    QString m_uiLanguage = QStringLiteral("en"); // 当前界面语言（用于 AI 聊天生成）
     bool m_whiteIsAI = false;
     bool m_blackIsAI = false;
     AIProvider m_whiteProvider;

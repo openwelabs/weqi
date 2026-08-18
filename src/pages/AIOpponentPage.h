@@ -18,6 +18,7 @@ public:
     explicit AIOpponentPage(MainWindow *window, QWidget *parent = nullptr);
 
     void onShown() override;
+    void retranslateUi() override;
 
 private:
     void setupUi();
@@ -27,7 +28,12 @@ private:
     // 当前选中的 Provider ID（无则返回空）
     QString currentProviderId() const;
 
+    QPushButton *m_backBtn = nullptr;
+    QLabel *m_headerTitle = nullptr;
+    QLabel *m_intro = nullptr;
+    QLabel *m_aiTitle = nullptr;
     QListWidget *m_aiList = nullptr;
+    QLabel *m_sideTitle = nullptr;
     QComboBox *m_sideCombo = nullptr;
     QLabel *m_descLabel = nullptr;
     QLabel *m_noConfigLabel = nullptr;

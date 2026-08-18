@@ -54,6 +54,20 @@ void SettingsManager::setAnimationsEnabled(bool on)
     emit settingsChanged();
 }
 
+QString SettingsManager::language() const
+{
+    return m_language;
+}
+
+void SettingsManager::setLanguage(const QString &lang)
+{
+    if (lang == m_language)
+        return;
+    m_language = lang;
+    save();
+    emit settingsChanged();
+}
+
 void SettingsManager::load()
 {
     QFile file(DataPaths::settingsFile());
@@ -64,6 +78,7 @@ void SettingsManager::load()
     m_theme = obj["theme"].toString(QStringLiteral("dark"));
     m_showMoveHints = obj["showMoveHints"].toBool(true);
     m_animationsEnabled = obj["animationsEnabled"].toBool(true);
+    m_language = obj["language"].toString(QStringLiteral("system"));
 }
 
 void SettingsManager::save()
@@ -72,6 +87,7 @@ void SettingsManager::save()
     obj["theme"] = m_theme;
     obj["showMoveHints"] = m_showMoveHints;
     obj["animationsEnabled"] = m_animationsEnabled;
+    obj["language"] = m_language;
 
     QFile file(DataPaths::settingsFile());
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))

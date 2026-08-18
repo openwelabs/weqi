@@ -24,6 +24,7 @@ class AIProviderManager;
 class GameHistoryManager;
 class StatsManager;
 class AIManager;
+class LanguageManager;
 
 // 主窗口：应用外壳。
 // 持有所有数据管理器与页面，通过 QStackedWidget 管理页面导航。
@@ -42,6 +43,7 @@ public:
     StatsManager *stats() const { return m_stats; }
     GameController *controller() const { return m_controller; }
     AIManager *aiManager() const { return m_aiManager; }
+    LanguageManager *language() const { return m_language; }
 
     // ---- 页面导航 ----
     void showHome();
@@ -80,6 +82,7 @@ private:
     GameHistoryManager *m_history = nullptr;
     StatsManager *m_stats = nullptr;
     AIManager *m_aiManager = nullptr;
+    LanguageManager *m_language = nullptr;
 
     // 棋局控制器（GamePage 使用）
     GameController *m_controller = nullptr;

@@ -17,7 +17,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra)
 endif()
 
-find_package(Qt6 6.2 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 6.2 REQUIRED COMPONENTS Widgets LinguistTools)
 
 qt_add_executable(Weqi
     src/main.cpp
@@ -64,6 +64,8 @@ qt_add_executable(Weqi
     src/data/ProfileManager.h
     src/data/SettingsManager.cpp
     src/data/SettingsManager.h
+    src/data/LanguageManager.cpp
+    src/data/LanguageManager.h
     src/data/AIProviderManager.cpp
     src/data/AIProviderManager.h
     src/data/GameHistoryManager.cpp
@@ -78,6 +80,25 @@ qt_add_executable(Weqi
 )
 
 target_link_libraries(Weqi PRIVATE Qt6::Widgets)
+
+# ---- 国际化 ----
+# 用 lupdate 从源码提取 tr() 字符串生成 .ts，lrelease 编译为 .qm，
+# 并嵌入到可执行文件资源（:/i18n/weqi_<lang>.qm）。
+set(TS_FILES
+    translations/weqi_zh_CN.ts
+    translations/weqi_zh_TW.ts
+    translations/weqi_en.ts
+    translations/weqi_ja.ts
+    translations/weqi_es.ts
+    translations/weqi_uk.ts
+    translations/weqi_ko.ts
+)
+
+qt_add_translations(Weqi
+    TS_FILES ${TS_FILES}
+    RESOURCE_PREFIX "/i18n"
+    LUPDATE_OPTIONS -no-obsolete
+)
 
 # 头文件搜索路径（data/ 与 ui/ 子目录）
 target_include_directories(Weqi PRIVATE

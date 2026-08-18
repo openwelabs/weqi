@@ -24,6 +24,10 @@ public:
     bool animationsEnabled() const;
     void setAnimationsEnabled(bool on);
 
+    // 界面语言（"system" 表示跟随系统，或语言代码如 "zh-CN"/"en"/"ja"）
+    QString language() const;
+    void setLanguage(const QString &lang);
+
     // 重新加载 / 保存
     void load();
     void save();
@@ -35,4 +39,5 @@ private:
     QString m_theme = QStringLiteral("dark");
     bool m_showMoveHints = true;
     bool m_animationsEnabled = true;
+    QString m_language = QStringLiteral("system");
 };

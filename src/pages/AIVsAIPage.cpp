@@ -32,22 +32,22 @@ void AIVsAIPage::setupUi()
     headerLayout->setContentsMargins(0, 0, 0, 0);
     headerLayout->setSpacing(14);
 
-    auto *backBtn = UiTheme::createGhostButton(QStringLiteral("← 返回"), header);
-    connect(backBtn, &QPushButton::clicked, this, [this]() {
+    m_backBtn = UiTheme::createGhostButton(tr("← 返回"), header);
+    connect(m_backBtn, &QPushButton::clicked, this, [this]() {
         m_window->showNewGame();
     });
-    headerLayout->addWidget(backBtn);
+    headerLayout->addWidget(m_backBtn);
 
-    auto *title = UiTheme::createTitle(QStringLiteral("AI vs AI"), 24, header);
-    headerLayout->addWidget(title);
+    m_headerTitle = UiTheme::createTitle(tr("AI vs AI"), 24, header);
+    headerLayout->addWidget(m_headerTitle);
     headerLayout->addStretch(1);
     rootLayout->addWidget(header);
 
     // 说明
-    auto *intro = UiTheme::createMutedLabel(
-        QStringLiteral("选择两个 AI 进行对弈。两个 AI 将轮流走子，由 C++ 控制整个对局。"), this);
-    intro->setWordWrap(true);
-    rootLayout->addWidget(intro);
+    m_intro = UiTheme::createMutedLabel(
+        tr("选择两个 AI 进行对弈。两个 AI 将轮流走子，由 C++ 控制整个对局。"), this);
+    m_intro->setWordWrap(true);
+    rootLayout->addWidget(m_intro);
 
     // 主卡片
     auto *card = UiTheme::createCard(this);
@@ -56,8 +56,8 @@ void AIVsAIPage::setupUi()
     layout->setSpacing(14);
 
     // ---- 白方 AI ----
-    auto *whiteTitle = UiTheme::createSectionLabel(QStringLiteral("白方 AI"), card);
-    layout->addWidget(whiteTitle);
+    m_whiteTitle = UiTheme::createSectionLabel(tr("白方 AI"), card);
+    layout->addWidget(m_whiteTitle);
 
     m_whiteList = new QListWidget(card);
     m_whiteList->setStyleSheet(QStringLiteral(
@@ -70,8 +70,8 @@ void AIVsAIPage::setupUi()
     layout->addWidget(m_whiteList);
 
     // ---- 黑方 AI ----
-    auto *blackTitle = UiTheme::createSectionLabel(QStringLiteral("黑方 AI"), card);
-    layout->addWidget(blackTitle);
+    m_blackTitle = UiTheme::createSectionLabel(tr("黑方 AI"), card);
+    layout->addWidget(m_blackTitle);
 
     m_blackList = new QListWidget(card);
     m_blackList->setStyleSheet(QStringLiteral(
@@ -85,13 +85,13 @@ void AIVsAIPage::setupUi()
 
     // 无配置提示（默认隐藏）
     m_noConfigLabel = UiTheme::createMutedLabel(
-        QStringLiteral("尚未配置任何 AI Provider。请先在设置中配置 AI。"), card);
+        tr("尚未配置任何 AI Provider。请先在设置中配置 AI。"), card);
     m_noConfigLabel->setWordWrap(true);
     m_noConfigLabel->hide();
     layout->addWidget(m_noConfigLabel);
 
     // 配置 AI 按钮（默认隐藏）
-    m_configureBtn = UiTheme::createSecondaryButton(QStringLiteral("配置 AI"), card);
+    m_configureBtn = UiTheme::createSecondaryButton(tr("配置 AI"), card);
     m_configureBtn->setMinimumHeight(44);
     connect(m_configureBtn, &QPushButton::clicked, this, [this]() {
         m_window->showSettings();
@@ -100,13 +100,25 @@ void AIVsAIPage::setupUi()
     layout->addWidget(m_configureBtn);
 
     // 开始按钮
-    m_startBtn = UiTheme::createPrimaryButton(QStringLiteral("开始对局"), card);
+    m_startBtn = UiTheme::createPrimaryButton(tr("开始对局"), card);
     m_startBtn->setMinimumHeight(52);
     connect(m_startBtn, &QPushButton::clicked, this, &AIVsAIPage::startGame);
     layout->addWidget(m_startBtn);
 
     rootLayout->addWidget(card);
     rootLayout->addStretch(1);
+}
+
+void AIVsAIPage::retranslateUi()
+{
+    m_backBtn->setText(tr("← 返回"));
+    m_headerTitle->setText(tr("AI vs AI"));
+    m_intro->setText(tr("选择两个 AI 进行对弈。两个 AI 将轮流走子，由 C++ 控制整个对局。"));
+    m_whiteTitle->setText(tr("白方 AI"));
+    m_blackTitle->setText(tr("黑方 AI"));
+    m_noConfigLabel->setText(tr("尚未配置任何 AI Provider。请先在设置中配置 AI。"));
+    m_configureBtn->setText(tr("配置 AI"));
+    m_startBtn->setText(tr("开始对局"));
 }
 
 void AIVsAIPage::refreshProviderLists()

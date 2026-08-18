@@ -22,16 +22,18 @@
 #include "DataPaths.h"
 #include "GameRecord.h"
 
+#include <QCoreApplication>
+
 namespace {
 
 // 对局类型 -> 显示文本
 QString modeText(GameMode mode)
 {
     switch (mode) {
-    case GameMode::HumanVsHuman: return QStringLiteral("真人对战");
-    case GameMode::HumanVsAI:    return QStringLiteral("人机对战");
-    case GameMode::AIVsAI:       return QStringLiteral("AI 对战");
-    case GameMode::Replay:       return QStringLiteral("复盘");
+    case GameMode::HumanVsHuman: return QCoreApplication::translate("HomePage", "真人对战");
+    case GameMode::HumanVsAI:    return QCoreApplication::translate("HomePage", "人机对战");
+    case GameMode::AIVsAI:       return QCoreApplication::translate("HomePage", "AI 对战");
+    case GameMode::Replay:       return QCoreApplication::translate("HomePage", "复盘");
     }
     return QString();
 }
@@ -40,10 +42,10 @@ QString modeText(GameMode mode)
 QString outcomeText(GameOutcome outcome)
 {
     switch (outcome) {
-    case GameOutcome::Win:    return QStringLiteral("胜");
-    case GameOutcome::Loss:   return QStringLiteral("负");
-    case GameOutcome::Draw:   return QStringLiteral("和");
-    case GameOutcome::Ongoing: return QStringLiteral("进行中");
+    case GameOutcome::Win:    return QCoreApplication::translate("HomePage", "胜");
+    case GameOutcome::Loss:   return QCoreApplication::translate("HomePage", "负");
+    case GameOutcome::Draw:   return QCoreApplication::translate("HomePage", "和");
+    case GameOutcome::Ongoing: return QCoreApplication::translate("HomePage", "进行中");
     }
     return QString();
 }
@@ -90,9 +92,9 @@ void HomePage::setupUi()
     titleBox->setSpacing(2);
     auto *title = UiTheme::createTitle(QStringLiteral("Weqi"), 30, header);
     titleBox->addWidget(title);
-    auto *subtitle = UiTheme::createMutedLabel(QStringLiteral("现代国际象棋"), header);
-    subtitle->setStyleSheet(QStringLiteral("color: %1; font-size: 13px;").arg(UiTheme::kMutedText.name()));
-    titleBox->addWidget(subtitle);
+    m_subtitle = UiTheme::createMutedLabel(tr("现代国际象棋"), header);
+    m_subtitle->setStyleSheet(QStringLiteral("color: %1; font-size: 13px;").arg(UiTheme::kMutedText.name()));
+    titleBox->addWidget(m_subtitle);
     headerLayout->addLayout(titleBox);
     headerLayout->addStretch(1);
     m_contentLayout->addWidget(header);
@@ -149,6 +151,35 @@ void HomePage::onShown()
 {
     refresh();
     animateIn();
+}
+
+void HomePage::retranslateUi()
+{
+    // 静态文本
+    m_subtitle->setText(tr("现代国际象棋"));
+    m_quickPlayTitle->setText(tr("QUICK PLAY"));
+    m_quickPlayBtn->setText(tr("▶  开始对局"));
+    m_continueTitle->setText(tr("未完成对局"));
+    m_continueDesc->setText(tr("有一盘进行中的对局，可以继续。"));
+    m_continueBtn->setText(tr("继续对局"));
+    m_settingsBtn->setText(tr("设置"));
+    m_historyBtn->setText(tr("历史"));
+    m_aboutBtn->setText(tr("关于"));
+
+    // 游戏模式卡片
+    const QStringList modeLabels = {
+        tr("真人对战"), tr("人机对战"), tr("AI 对战"), tr("复盘")
+    };
+    const QStringList modeDescs = {
+        tr("本地双人对弈"), tr("与 AI 对弈"), tr("AI 与 AI 对弈"), tr("查看历史对局")
+    };
+    for (int i = 0; i < m_modeLabels.size() && i < modeLabels.size(); ++i)
+        m_modeLabels[i]->setText(modeLabels[i]);
+    for (int i = 0; i < m_modeDescs.size() && i < modeDescs.size(); ++i)
+        m_modeDescs[i]->setText(modeDescs[i]);
+
+    // 动态卡片（资料/战绩/最近对局）通过重建刷新
+    refresh();
 }
 
 void HomePage::refresh()
@@ -210,7 +241,7 @@ QWidget *HomePage::createProfileCard()
     infoBox->addWidget(nameLabel);
 
     auto *ratingLabel = UiTheme::createMutedLabel(
-        QStringLiteral("Rating  %1").arg(m_window->profile()->rating()), card);
+        tr("Rating  %1").arg(m_window->profile()->rating()), card);
     ratingLabel->setStyleSheet(QStringLiteral("color: %1; font-size: 14px;").arg(UiTheme::kMutedText.name()));
     infoBox->addWidget(ratingLabel);
     layout->addLayout(infoBox);
@@ -218,7 +249,7 @@ QWidget *HomePage::createProfileCard()
     layout->addStretch(1);
 
     // 编辑资料按钮
-    auto *editBtn = UiTheme::createGhostButton(QStringLiteral("编辑资料"), card);
+    auto *editBtn = UiTheme::createGhostButton(tr("编辑资料"), card);
     connect(editBtn, &QPushButton::clicked, this, [this]() {
         m_window->showSettings();
     });
@@ -234,21 +265,21 @@ QWidget *HomePage::createQuickPlayCard()
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(14);
 
-    auto *title = UiTheme::createSectionLabel(QStringLiteral("QUICK PLAY"), card);
-    layout->addWidget(title);
+    m_quickPlayTitle = UiTheme::createSectionLabel(tr("QUICK PLAY"), card);
+    layout->addWidget(m_quickPlayTitle);
 
-    auto *playBtn = UiTheme::createPrimaryButton(QStringLiteral("▶  开始对局"), card);
-    playBtn->setMinimumHeight(56);
-    playBtn->setStyleSheet(QStringLiteral(
+    m_quickPlayBtn = UiTheme::createPrimaryButton(tr("▶  开始对局"), card);
+    m_quickPlayBtn->setMinimumHeight(56);
+    m_quickPlayBtn->setStyleSheet(QStringLiteral(
         "QPushButton { background-color: %1; color: %2; border: none;"
         " border-radius: 14px; padding: 16px 24px; font-size: 18px; font-weight: bold; }"
         "QPushButton:hover { background-color: %3; }")
         .arg(UiTheme::kAccent.name()).arg(UiTheme::kTitleColor.name())
         .arg(QColor(0x5A, 0xC8, 0x5E).name()));
-    connect(playBtn, &QPushButton::clicked, this, [this]() {
+    connect(m_quickPlayBtn, &QPushButton::clicked, this, [this]() {
         m_window->showNewGame();
     });
-    layout->addWidget(playBtn);
+    layout->addWidget(m_quickPlayBtn);
 
     return card;
 }
@@ -260,7 +291,7 @@ QWidget *HomePage::createGameModesCard()
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(14);
 
-    auto *title = UiTheme::createSectionLabel(QStringLiteral("游戏模式"), card);
+    auto *title = UiTheme::createSectionLabel(tr("游戏模式"), card);
     layout->addWidget(title);
 
     // 模式按钮网格
@@ -274,14 +305,14 @@ QWidget *HomePage::createGameModesCard()
     };
 
     const QVector<ModeEntry> modes = {
-        { QStringLiteral("真人对战"), QStringLiteral("本地双人对弈"),
+        { tr("真人对战"), tr("本地双人对弈"),
           [this]() { m_window->startGame(GameMode::HumanVsHuman, QStringLiteral("Human"),
                                           m_window->profile()->playerName(), QStringLiteral("对手")); } },
-        { QStringLiteral("人机对战"), QStringLiteral("与 AI 对弈"),
+        { tr("人机对战"), tr("与 AI 对弈"),
           [this]() { m_window->showAIOpponent(); } },
-        { QStringLiteral("AI 对战"), QStringLiteral("AI 与 AI 对弈"),
+        { tr("AI 对战"), tr("AI 与 AI 对弈"),
           [this]() { m_window->showAIVsAI(); } },
-        { QStringLiteral("复盘"), QStringLiteral("查看历史对局"),
+        { tr("复盘"), tr("查看历史对局"),
           [this]() { m_window->showHistory(); } },
     };
 
@@ -309,6 +340,9 @@ QWidget *HomePage::createGameModesCard()
         desc->setAttribute(Qt::WA_TransparentForMouseEvents);
         btnLayout->addWidget(desc);
 
+        m_modeLabels.append(label);
+        m_modeDescs.append(desc);
+
         // 点击处理：安装事件过滤器
         modeCard->installEventFilter(this);
         m_modeCards.append({ modeCard, m.action });
@@ -328,7 +362,7 @@ QWidget *HomePage::createStatsCard()
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(14);
 
-    auto *title = UiTheme::createSectionLabel(QStringLiteral("你的战绩"), card);
+    auto *title = UiTheme::createSectionLabel(tr("你的战绩"), card);
     layout->addWidget(title);
 
     const PlayerStats &s = m_window->stats()->stats();
@@ -343,14 +377,14 @@ QWidget *HomePage::createStatsCard()
     };
 
     const QVector<StatEntry> stats = {
-        { QStringLiteral("对局数"), QString::number(s.gamesPlayed) },
-        { QStringLiteral("胜率"), QStringLiteral("%1%").arg(s.winRate, 0, 'f', 0) },
-        { QStringLiteral("胜"), QString::number(s.wins) },
-        { QStringLiteral("和"), QString::number(s.draws) },
-        { QStringLiteral("负"), QString::number(s.losses) },
-        { QStringLiteral("最高连胜"), QString::number(s.bestWinStreak) },
-        { QStringLiteral("当前连胜"), QString::number(s.currentStreak) },
-        { QStringLiteral("最佳 Rating"), QString::number(m_window->profile()->bestRating()) },
+        { tr("对局数"), QString::number(s.gamesPlayed) },
+        { tr("胜率"), QStringLiteral("%1%").arg(s.winRate, 0, 'f', 0) },
+        { tr("胜"), QString::number(s.wins) },
+        { tr("和"), QString::number(s.draws) },
+        { tr("负"), QString::number(s.losses) },
+        { tr("最高连胜"), QString::number(s.bestWinStreak) },
+        { tr("当前连胜"), QString::number(s.currentStreak) },
+        { tr("最佳 Rating"), QString::number(m_window->profile()->bestRating()) },
     };
 
     int idx = 0;
@@ -382,12 +416,12 @@ QWidget *HomePage::createRecentGamesCard()
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(14);
 
-    auto *title = UiTheme::createSectionLabel(QStringLiteral("最近对局"), card);
+    auto *title = UiTheme::createSectionLabel(tr("最近对局"), card);
     layout->addWidget(title);
 
     const QVector<GameRecord> recent = m_window->history()->recent(5);
     if (recent.isEmpty()) {
-        auto *empty = UiTheme::createMutedLabel(QStringLiteral("还没有对局记录，开始你的第一盘棋吧。"), card);
+        auto *empty = UiTheme::createMutedLabel(tr("还没有对局记录，开始你的第一盘棋吧。"), card);
         layout->addWidget(empty);
         return card;
     }
@@ -436,7 +470,7 @@ QWidget *HomePage::createRecentGamesCard()
     }
 
     // 查看全部
-    auto *viewAll = UiTheme::createGhostButton(QStringLiteral("查看全部对局"), card);
+    auto *viewAll = UiTheme::createGhostButton(tr("查看全部对局"), card);
     connect(viewAll, &QPushButton::clicked, this, [this]() {
         m_window->showHistory();
     });
@@ -456,19 +490,19 @@ QWidget *HomePage::createContinueCard()
 
     auto *infoBox = new QVBoxLayout();
     infoBox->setSpacing(2);
-    auto *title = UiTheme::createSectionLabel(QStringLiteral("未完成对局"), card);
-    infoBox->addWidget(title);
-    auto *desc = UiTheme::createMutedLabel(QStringLiteral("有一盘进行中的对局，可以继续。"), card);
-    infoBox->addWidget(desc);
+    m_continueTitle = UiTheme::createSectionLabel(tr("未完成对局"), card);
+    infoBox->addWidget(m_continueTitle);
+    m_continueDesc = UiTheme::createMutedLabel(tr("有一盘进行中的对局，可以继续。"), card);
+    infoBox->addWidget(m_continueDesc);
     layout->addLayout(infoBox);
 
     layout->addStretch(1);
 
-    auto *continueBtn = UiTheme::createPrimaryButton(QStringLiteral("继续对局"), card);
-    connect(continueBtn, &QPushButton::clicked, this, [this]() {
+    m_continueBtn = UiTheme::createPrimaryButton(tr("继续对局"), card);
+    connect(m_continueBtn, &QPushButton::clicked, this, [this]() {
         m_window->continueGame();
     });
-    layout->addWidget(continueBtn);
+    layout->addWidget(m_continueBtn);
 
     return card;
 }
@@ -480,23 +514,23 @@ QWidget *HomePage::createFooter()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(12);
 
-    auto *settingsBtn = UiTheme::createGhostButton(QStringLiteral("设置"), footer);
-    connect(settingsBtn, &QPushButton::clicked, this, [this]() {
+    m_settingsBtn = UiTheme::createGhostButton(tr("设置"), footer);
+    connect(m_settingsBtn, &QPushButton::clicked, this, [this]() {
         m_window->showSettings();
     });
-    layout->addWidget(settingsBtn);
+    layout->addWidget(m_settingsBtn);
 
-    auto *historyBtn = UiTheme::createGhostButton(QStringLiteral("历史"), footer);
-    connect(historyBtn, &QPushButton::clicked, this, [this]() {
+    m_historyBtn = UiTheme::createGhostButton(tr("历史"), footer);
+    connect(m_historyBtn, &QPushButton::clicked, this, [this]() {
         m_window->showHistory();
     });
-    layout->addWidget(historyBtn);
+    layout->addWidget(m_historyBtn);
 
-    auto *aboutBtn = UiTheme::createGhostButton(QStringLiteral("关于"), footer);
-    connect(aboutBtn, &QPushButton::clicked, this, [this]() {
+    m_aboutBtn = UiTheme::createGhostButton(tr("关于"), footer);
+    connect(m_aboutBtn, &QPushButton::clicked, this, [this]() {
         m_window->showAbout();
     });
-    layout->addWidget(aboutBtn);
+    layout->addWidget(m_aboutBtn);
 
     layout->addStretch(1);
     return footer;
