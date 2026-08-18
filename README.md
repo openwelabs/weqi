@@ -1,77 +1,116 @@
 # Weqi
 
-一个现代、简洁的开源桌面国际象棋软件。
+**Weqi** is a modern, clean, open-source desktop chess application. All chess rules are implemented in a local C++ engine, with support for human vs human, human vs AI, AI vs AI, and game replay.
 
-当前处于**第一阶段**：仅实现漂亮的国际象棋棋盘 UI 与基础棋子交互。尚未实现完整规则、AI 或后端。
+> **Read this document in your language:**
+> [简体中文](docs/zh-CN/README.md) · [繁體中文](docs/zh-TW/README.md) · [日本語](docs/ja/README.md) · [Español](docs/es/README.md) · [Українська](docs/uk/README.md) · [한국어](docs/ko/README.md)
 
-## 技术栈
+---
 
-- C++17
-- Qt 6（Widgets）
-- CMake
+## Features
 
-## 功能（当前阶段）
+- **Four game modes**
+  - **Human vs Human** — two players on the same device.
+  - **Human vs AI** — play against an AI provider of your choice.
+  - **AI vs AI** — two AIs play against each other automatically (does not count toward your stats).
+  - **Replay** — review your historical games.
+- **Full chess rules** implemented locally in C++ (legal move validation, check, checkmate, stalemate, castling, en passant, promotion, etc.).
+- **Player profile & rating** — track your rating, best rating, and edit your player name.
+- **Statistics** — games played, win rate, wins, draws, losses, best/current win streak, best rating.
+- **Game history** — browse past games with date, mode, opponent, result, and rating change.
+- **Continue unfinished game** — resume an in-progress game at any time.
+- **AI providers** — add, edit, and delete AI providers (name, type, base URL, API key, model). API keys are stored privately in the system user-data directory, never in the project.
+- **AI chat** — the AI briefly comments on its move; the message follows your UI language.
+- **Internationalization (i18n)** — 7 interface languages: Simplified Chinese, Traditional Chinese, English, Japanese, Spanish, Ukrainian, and Korean. Switch languages at runtime without restarting.
 
-- 8×8 国际象棋棋盘，矢量绘制棋子，无外部图片依赖
-- 完整初始棋局（白方与黑方所有棋子）
-- 点击棋子选中，再点击目标格移动（暂不校验合法性）
-- 平滑的落子动画
-- 鼠标悬停棋盘格时的视觉反馈
-- 现代、圆润、深色主题 UI
-- 窗口缩放时棋盘保持正方形、布局不变形
-- 右侧预留信息面板（未来用于 AI、棋谱、状态）
+## Tech Stack
 
-## 目录结构
+- **C++17**
+- **Qt 6** (Widgets)
+- **CMake**
+
+## Directory Structure
 
 ```
 weqi/
 ├── CMakeLists.txt
 ├── README.md
+├── ai_adapter/          # Python AI adapter (language detection, retry/coaching)
+│   ├── main.py
+│   ├── parser.py
+│   └── providers/
+│       └── openai_compatible.py
+├── resources/           # Qt resource files
+├── scripts/             # Helper scripts
 ├── src/
-│   ├── main.cpp          # 程序入口
-│   ├── MainWindow.h/.cpp # 主窗口与整体布局
-│   ├── ChessBoard.h/.cpp # 棋盘绘制、鼠标交互与动画
-│   └── ChessPiece.h/.cpp # 棋子数据模型与矢量绘制路径
-└── resources/
-    └── resources.qrc     # Qt 资源系统（当前为空，预留扩展）
+│   ├── main.cpp         # Program entry
+│   ├── MainWindow.h/.cpp
+│   ├── GameController.h/.cpp
+│   ├── ChessBoard.h/.cpp
+│   ├── ChessPiece.h/.cpp
+│   ├── ai/              # AI manager
+│   ├── data/            # Settings, language, profile, stats, history managers
+│   └── pages/           # Home, NewGame, Game, AIOpponent, AIVsAI, History, Settings, About
+├── tests/               # C++ tests
+├── tools/               # Development tools
+└── translations/        # Qt .ts translation files (7 languages)
 ```
 
-## 构建
+## Build
 
-### 依赖
+### Dependencies
 
 - CMake ≥ 3.16
-- Qt 6（≥ 6.2，含 Widgets 模块）
-- 支持 C++17 的编译器（GCC / Clang）
+- Qt 6 (≥ 6.2, including the Widgets module)
+- A C++17-capable compiler (GCC / Clang)
+- Python 3 (for the AI adapter)
 
-### 构建步骤
+### Build Steps
 
 ```bash
-# 1. 配置
+# 1. Configure
 cmake -S . -B build
 
-# 2. 编译
+# 2. Build
 cmake --build build -j
 
-# 3. 运行
+# 3. Run
 ./build/Weqi
 ```
 
-也可以使用 CMake 预设风格的一行命令：
+Or as a one-liner:
 
 ```bash
 cmake -S . -B build && cmake --build build -j && ./build/Weqi
 ```
 
-## 使用说明
+### Translations
 
-- **选中棋子**：左键点击任意棋子，该格会高亮。
-- **移动棋子**：选中后点击另一个格子，棋子会平滑移动到目标格（当前不校验合法性，目标格不同即可移动）。
-- **取消选中**：点击空白格。
+Translation files live in `translations/` and are compiled into the binary via Qt's `qt_add_translations`. To update them after changing `tr()` strings:
 
-## 后续规划
+```bash
+# Update .ts files (extract new strings)
+lupdate src -ts translations/weqi_<lang>.ts
 
-- 完整国际象棋规则
-- AI 对弈
-- 棋谱记录与回放
-- 状态显示
+# Release .qm files
+lrelease translations/weqi_<lang>.ts
+```
+
+## Usage
+
+- **Select a piece**: left-click any piece to highlight it.
+- **Move a piece**: after selecting, click a target square. Legal moves are validated by the local engine.
+- **Undo**: use the "Undo" button to take back a move.
+- **New game**: start a fresh game from the game page or the home screen.
+- **AI vs AI**: choose two AI providers, then use Start / Pause / Resume / Stop to control the automatic match.
+- **Change language**: open Settings → Language and pick one of the 7 supported languages (or "Follow System").
+
+## Data Storage
+
+- **Settings & profile**: stored in the system user-data directory (e.g. `~/.local/share/Weqi/` on Linux).
+- **AI provider config**: stored separately in the user-data directory, never in the project.
+- **Game history & saved games**: stored in the user-data directory.
+
+## License
+
+Open source. See the repository for details.
