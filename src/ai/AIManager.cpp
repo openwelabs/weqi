@@ -177,11 +177,13 @@ QString AIManager::resolveAdapterPath() const
 
     // 优先使用可执行文件所在目录下的 ai_adapter/main.py
     const QString exeDir = QCoreApplication::applicationDirPath();
-    const QStringList candidates = {
+    QStringList candidates = {
         exeDir + QStringLiteral("/ai_adapter/main.py"),
         exeDir + QStringLiteral("/../ai_adapter/main.py"),
         exeDir + QStringLiteral("/../../ai_adapter/main.py"),
     };
+    // Linux 打包安装（RPM/deb）时，适配器位于标准数据目录 /usr/share/<app>/ai_adapter/
+    candidates << QStringLiteral("/usr/share/weqi/ai_adapter/main.py");
     for (const QString &path : candidates) {
         if (QFileInfo::exists(path))
             return QFileInfo(path).absoluteFilePath();

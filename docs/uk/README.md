@@ -40,6 +40,7 @@ weqi/
 │   ├── parser.py
 │   └── providers/
 │       └── openai_compatible.py
+├── dist/                # Каталог для розповсюдження (скомпільований бінарний файл + скрипти пакування)
 ├── resources/           # Файли ресурсів Qt
 ├── scripts/             # Допоміжні скрипти
 ├── src/
@@ -95,6 +96,27 @@ lupdate src -ts translations/weqi_<lang>.ts
 # Випуск файлів .qm
 lrelease translations/weqi_<lang>.ts
 ```
+
+## Пакування
+
+Каталог `dist/` містить скомпільований бінарний файл і адаптер ШІ на Python, готові до пакування в інсталятори.
+
+```
+dist/
+├── Weqi                  # Скомпільований бінарний файл C++ (Qt6 Widgets, 7 мов вбудовано)
+├── ai_adapter/           # Адаптер ШІ на Python
+├── package-deb.sh        # Збірка .deb (Linux)
+├── package-rpm.sh        # Збірка .rpm (Linux, Fedora/RHEL/openSUSE)
+├── weqi.spec             # Файл spec для RPM
+├── package-exe.sh        # Збірка .exe (Windows, запускати на Windows)
+└── README.md
+```
+
+- **.deb**: `cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
+- **.rpm**: `cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
+- **.exe**: запустіть `./package-exe.sh` на Windows → каталог `weqi-win/` (використовує `windeployqt`)
+
+Бінарний файл шукає `ai_adapter/main.py` відносно виконуваного файлу або в `/usr/share/weqi/ai_adapter/main.py`, коли встановлений через пакет.
 
 ## Використання
 

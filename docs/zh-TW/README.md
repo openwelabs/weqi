@@ -40,6 +40,7 @@ weqi/
 │   ├── parser.py
 │   └── providers/
 │       └── openai_compatible.py
+├── dist/                # 可分發目錄（編譯好的二進位 + 打包腳本）
 ├── resources/           # Qt 資源檔
 ├── scripts/             # 輔助腳本
 ├── src/
@@ -95,6 +96,27 @@ lupdate src -ts translations/weqi_<lang>.ts
 # 發佈 .qm 檔
 lrelease translations/weqi_<lang>.ts
 ```
+
+## 打包
+
+`dist/` 目錄包含編譯好的二進位與 Python AI 介面卡，可直接打包成安裝包。
+
+```
+dist/
+├── Weqi                  # 編譯好的 C++ 二進位（Qt6 Widgets，內嵌 7 種語言）
+├── ai_adapter/           # Python AI 介面卡
+├── package-deb.sh        # 打包 .deb（Linux）
+├── package-rpm.sh        # 打包 .rpm（Linux，Fedora/RHEL/openSUSE）
+├── weqi.spec             # RPM spec 檔案
+├── package-exe.sh        # 打包 .exe（Windows，需在 Windows 上執行）
+└── README.md
+```
+
+- **.deb**：`cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
+- **.rpm**：`cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
+- **.exe**：在 Windows 上執行 `./package-exe.sh` → `weqi-win/` 目錄（使用 `windeployqt`）
+
+二進位會相對於可執行檔查找 `ai_adapter/main.py`；透過安裝包安裝時，則從 `/usr/share/weqi/ai_adapter/main.py` 載入。
 
 ## 使用說明
 

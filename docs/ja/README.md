@@ -40,6 +40,7 @@ weqi/
 │   ├── parser.py
 │   └── providers/
 │       └── openai_compatible.py
+├── dist/                # 配布用ディレクトリ（コンパイル済みバイナリ + パッケージングスクリプト）
 ├── resources/           # Qt リソースファイル
 ├── scripts/             # 補助スクリプト
 ├── src/
@@ -95,6 +96,27 @@ lupdate src -ts translations/weqi_<lang>.ts
 # .qm ファイルをリリース
 lrelease translations/weqi_<lang>.ts
 ```
+
+## パッケージング
+
+`dist/` ディレクトリには、コンパイル済みバイナリと Python AI アダプターが含まれており、インストーラーにパッケージングできます。
+
+```
+dist/
+├── Weqi                  # コンパイル済み C++ バイナリ（Qt6 Widgets、7 言語内蔵）
+├── ai_adapter/           # Python AI アダプター
+├── package-deb.sh        # .deb をビルド（Linux）
+├── package-rpm.sh        # .rpm をビルド（Linux、Fedora/RHEL/openSUSE）
+├── weqi.spec             # RPM spec ファイル
+├── package-exe.sh        # .exe をビルド（Windows、Windows 上で実行）
+└── README.md
+```
+
+- **.deb**：`cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
+- **.rpm**：`cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
+- **.exe**：Windows 上で `./package-exe.sh` を実行 → `weqi-win/` ディレクトリ（`windeployqt` を使用）
+
+バイナリは実行ファイルからの相対パスで `ai_adapter/main.py` を探します。パッケージでインストールした場合は `/usr/share/weqi/ai_adapter/main.py` から読み込みます。
 
 ## 使い方
 

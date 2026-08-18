@@ -40,6 +40,7 @@ weqi/
 │   ├── parser.py
 │   └── providers/
 │       └── openai_compatible.py
+├── dist/                # Directorio distribuible (binario compilado + scripts de empaquetado)
 ├── resources/           # Archivos de recursos Qt
 ├── scripts/             # Scripts auxiliares
 ├── src/
@@ -95,6 +96,27 @@ lupdate src -ts translations/weqi_<lang>.ts
 # Publicar archivos .qm
 lrelease translations/weqi_<lang>.ts
 ```
+
+## Empaquetado
+
+El directorio `dist/` contiene el binario compilado y el adaptador de IA en Python, listos para empaquetarse en instaladores.
+
+```
+dist/
+├── Weqi                  # Binario C++ compilado (Qt6 Widgets, 7 idiomas integrados)
+├── ai_adapter/           # Adaptador de IA en Python
+├── package-deb.sh        # Compilar un .deb (Linux)
+├── package-rpm.sh        # Compilar un .rpm (Linux, Fedora/RHEL/openSUSE)
+├── weqi.spec             # Archivo spec de RPM
+├── package-exe.sh        # Compilar un .exe (Windows, ejecutar en Windows)
+└── README.md
+```
+
+- **.deb**: `cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
+- **.rpm**: `cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
+- **.exe**: ejecuta `./package-exe.sh` en Windows → directorio `weqi-win/` (usa `windeployqt`)
+
+El binario localiza `ai_adapter/main.py` relativo al ejecutable, o en `/usr/share/weqi/ai_adapter/main.py` cuando se instala mediante un paquete.
 
 ## Uso
 

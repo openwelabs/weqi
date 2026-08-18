@@ -40,6 +40,7 @@ weqi/
 │   ├── parser.py
 │   └── providers/
 │       └── openai_compatible.py
+├── dist/                # 배포용 디렉터리 (컴파일된 바이너리 + 패키징 스크립트)
 ├── resources/           # Qt 리소스 파일
 ├── scripts/             # 보조 스크립트
 ├── src/
@@ -95,6 +96,27 @@ lupdate src -ts translations/weqi_<lang>.ts
 # .qm 파일 릴리스
 lrelease translations/weqi_<lang>.ts
 ```
+
+## 패키징
+
+`dist/` 디렉터리에는 컴파일된 바이너리와 Python AI 어댑터가 포함되어 있으며, 설치 프로그램으로 패키징할 준비가 되어 있습니다.
+
+```
+dist/
+├── Weqi                  # 컴파일된 C++ 바이너리 (Qt6 Widgets, 7개 언어 내장)
+├── ai_adapter/           # Python AI 어댑터
+├── package-deb.sh        # .deb 빌드 (Linux)
+├── package-rpm.sh        # .rpm 빌드 (Linux, Fedora/RHEL/openSUSE)
+├── weqi.spec             # RPM spec 파일
+├── package-exe.sh        # .exe 빌드 (Windows, Windows에서 실행)
+└── README.md
+```
+
+- **.deb**: `cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
+- **.rpm**: `cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
+- **.exe**: Windows에서 `./package-exe.sh` 실행 → `weqi-win/` 디렉터리 (`windeployqt` 사용)
+
+바이너리는 실행 파일 기준 상대 경로로 `ai_adapter/main.py`를 찾습니다. 패키지로 설치한 경우 `/usr/share/weqi/ai_adapter/main.py`에서 로드합니다.
 
 ## 사용 방법
 
