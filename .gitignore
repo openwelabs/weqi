@@ -2,6 +2,10 @@
 build/
 build-*/
 
+# AppImage 打包产物（体积大，不入库）
+dist/*.AppImage
+dist/squashfs-root/
+
 # Qt / CMake 生成文件
 CMakeCache.txt
 CMakeFiles/

@@ -1,7 +1,8 @@
 # Weqi 可分发目录
 
 本目录包含编译好的 **Weqi** 可执行文件与 Python AI 适配器，用于打包成
-`.deb`（Linux）、`.exe`（Windows）等安装包。
+`.deb`（Linux）、`.rpm`（Linux）、`.exe`（Windows）、`.AppImage`（Linux）
+等安装包。
 
 ## 目录结构
 
@@ -20,6 +21,9 @@ dist/
 ├── package-rpm.sh        # 打包 .rpm（Linux，Fedora/RHEL/openSUSE）
 ├── weqi.spec             # RPM spec 文件
 ├── package-exe.sh        # 打包 .exe（Windows，需在 Windows 上运行）
+├── package-appimage.sh   # 打包 .AppImage（Linux，任意发行版）
+├── weqi.desktop          # AppImage 桌面入口
+├── weqi.png              # AppImage 图标（512×512）
 └── README.md
 ```
 
@@ -72,6 +76,22 @@ dist/
 脚本使用 `windeployqt` 收集 Qt 运行库，并生成 `Weqi.exe` 与
 `ai_adapter/` 到 `weqi-win/` 目录，可直接分发或进一步用
 Inno Setup / NSIS 打成安装包。
+
+## 打包 .AppImage（Linux）
+
+```bash
+./package-appimage.sh
+```
+
+脚本使用 `linuxdeploy` + `linuxdeploy-plugin-qt` 收集 Qt 运行库并生成
+`Weqi-0.1.0-x86_64.AppImage`（单文件，无需安装，任意发行版可直接运行）。
+首次运行会自动下载 linuxdeploy 工具到 `~/.cache/weqi-appimage/`。
+
+> **已知问题与修复**：linuxdeploy 用 patchelf 给库加 `RUNPATH=$ORIGIN` 时，
+> 会把 `.init` 段从 `0x2cc` 移到别处，但不更新动态段里的 `DT_INIT` 标签，
+> 导致动态链接器跳转到零填充内存 → 启动即 SIGSEGV（Wayland 会话下尤为明显）。
+> 脚本在打包前会用系统原始版本替换所有 `DT_INIT` 与 `.init` 段地址不一致的
+> 库/插件，因此生成的 AppImage 在 Wayland 与 X11 下均可正常运行。
 
 ## 数据存储
 

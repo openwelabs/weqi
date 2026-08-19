@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Weqi
+Name[zh_CN]=Weqi
+Comment=Modern, clean, open-source desktop chess application
+Comment[zh_CN]=现代、简洁的开源桌面国际象棋应用
+Exec=Weqi
+Icon=weqi
+Terminal=false
+Categories=Game;BoardGame;
+Keywords=chess;game;board;
