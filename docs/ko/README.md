@@ -109,12 +109,16 @@ dist/
 ├── package-rpm.sh        # .rpm 빌드 (Linux, Fedora/RHEL/openSUSE)
 ├── weqi.spec             # RPM spec 파일
 ├── package-exe.sh        # .exe 빌드 (Windows, Windows에서 실행)
+├── package-appimage.sh   # .AppImage 빌드 (Linux, 모든 배포판)
+├── weqi.desktop          # AppImage 데스크톱 항목
+├── weqi.png              # AppImage 아이콘 (512×512)
 └── README.md
 ```
 
 - **.deb**: `cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
 - **.rpm**: `cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
 - **.exe**: Windows에서 `./package-exe.sh` 실행 → `weqi-win/` 디렉터리 (`windeployqt` 사용)
+- **.AppImage**: `cd dist && ./package-appimage.sh` → `Weqi-0.1.0-x86_64.AppImage` (단일 파일, 설치 불필요)
 
 바이너리는 실행 파일 기준 상대 경로로 `ai_adapter/main.py`를 찾습니다. 패키지로 설치한 경우 `/usr/share/weqi/ai_adapter/main.py`에서 로드합니다.
 

@@ -109,12 +109,16 @@ dist/
 ├── package-rpm.sh        # Compilar un .rpm (Linux, Fedora/RHEL/openSUSE)
 ├── weqi.spec             # Archivo spec de RPM
 ├── package-exe.sh        # Compilar un .exe (Windows, ejecutar en Windows)
+├── package-appimage.sh   # Compilar un .AppImage (Linux, cualquier distribución)
+├── weqi.desktop          # Entrada de escritorio del AppImage
+├── weqi.png              # Icono del AppImage (512×512)
 └── README.md
 ```
 
 - **.deb**: `cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
 - **.rpm**: `cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
 - **.exe**: ejecuta `./package-exe.sh` en Windows → directorio `weqi-win/` (usa `windeployqt`)
+- **.AppImage**: `cd dist && ./package-appimage.sh` → `Weqi-0.1.0-x86_64.AppImage` (archivo único, sin instalación)
 
 El binario localiza `ai_adapter/main.py` relativo al ejecutable, o en `/usr/share/weqi/ai_adapter/main.py` cuando se instala mediante un paquete.
 

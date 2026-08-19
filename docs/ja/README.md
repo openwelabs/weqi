@@ -109,12 +109,16 @@ dist/
 ├── package-rpm.sh        # .rpm をビルド（Linux、Fedora/RHEL/openSUSE）
 ├── weqi.spec             # RPM spec ファイル
 ├── package-exe.sh        # .exe をビルド（Windows、Windows 上で実行）
+├── package-appimage.sh   # .AppImage をビルド（Linux、任意のディストリビューション）
+├── weqi.desktop          # AppImage デスクトップエントリ
+├── weqi.png              # AppImage アイコン（512×512）
 └── README.md
 ```
 
 - **.deb**：`cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
 - **.rpm**：`cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
 - **.exe**：Windows 上で `./package-exe.sh` を実行 → `weqi-win/` ディレクトリ（`windeployqt` を使用）
+- **.AppImage**：`cd dist && ./package-appimage.sh` → `Weqi-0.1.0-x86_64.AppImage`（単一ファイル、インストール不要）
 
 バイナリは実行ファイルからの相対パスで `ai_adapter/main.py` を探します。パッケージでインストールした場合は `/usr/share/weqi/ai_adapter/main.py` から読み込みます。
 

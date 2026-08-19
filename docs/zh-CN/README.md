@@ -109,12 +109,16 @@ dist/
 ├── package-rpm.sh        # 打包 .rpm（Linux，Fedora/RHEL/openSUSE）
 ├── weqi.spec             # RPM spec 文件
 ├── package-exe.sh        # 打包 .exe（Windows，需在 Windows 上运行）
+├── package-appimage.sh   # 打包 .AppImage（Linux，任意发行版）
+├── weqi.desktop          # AppImage 桌面入口
+├── weqi.png              # AppImage 图标（512×512）
 └── README.md
 ```
 
 - **.deb**：`cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
 - **.rpm**：`cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
 - **.exe**：在 Windows 上运行 `./package-exe.sh` → `weqi-win/` 目录（使用 `windeployqt`）
+- **.AppImage**：`cd dist && ./package-appimage.sh` → `Weqi-0.1.0-x86_64.AppImage`（单文件，无需安装）
 
 二进制会相对于可执行文件查找 `ai_adapter/main.py`；通过安装包安装时，则从 `/usr/share/weqi/ai_adapter/main.py` 加载。
 

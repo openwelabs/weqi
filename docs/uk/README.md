@@ -109,12 +109,16 @@ dist/
 ├── package-rpm.sh        # Збірка .rpm (Linux, Fedora/RHEL/openSUSE)
 ├── weqi.spec             # Файл spec для RPM
 ├── package-exe.sh        # Збірка .exe (Windows, запускати на Windows)
+├── package-appimage.sh   # Збірка .AppImage (Linux, будь-який дистрибутив)
+├── weqi.desktop          # Запис робочого столу AppImage
+├── weqi.png              # Іконка AppImage (512×512)
 └── README.md
 ```
 
 - **.deb**: `cd dist && ./package-deb.sh` → `weqi_0.1.0_amd64.deb`
 - **.rpm**: `cd dist && ./package-rpm.sh` → `weqi-0.1.0-1.fc44.x86_64.rpm`
 - **.exe**: запустіть `./package-exe.sh` на Windows → каталог `weqi-win/` (використовує `windeployqt`)
+- **.AppImage**: `cd dist && ./package-appimage.sh` → `Weqi-0.1.0-x86_64.AppImage` (один файл, без встановлення)
 
 Бінарний файл шукає `ai_adapter/main.py` відносно виконуваного файлу або в `/usr/share/weqi/ai_adapter/main.py`, коли встановлений через пакет.
 
