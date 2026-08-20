@@ -158,6 +158,8 @@ Todos los proveedores siguientes exponen un endpoint compatible con OpenAI, así
 | **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
 | **Kimi (Moonshot)** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
 | **Mimo (Xiaomi)** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+| **Claude (Anthropic)** | `https://api.anthropic.com/v1` | `claude-sonnet-4-20250514` | console.anthropic.com |
+| **Grok (xAI)** | `https://api.x.ai/v1` | `grok-2-latest` | console.x.ai |
 
 > **Nota:** Los nombres de los modelos y los endpoints cambian con frecuencia. Consulta siempre la documentación oficial del proveedor para conocer el ID de modelo y la Base URL más recientes. El campo «Nombre» es solo una etiqueta que eliges — no afecta a qué API se llama.
 

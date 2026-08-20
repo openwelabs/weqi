@@ -158,6 +158,8 @@ dist/
 | **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
 | **Kimi（月之暗面）** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
 | **Mimo（小米）** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+| **Claude（Anthropic）** | `https://api.anthropic.com/v1` | `claude-sonnet-4-20250514` | console.anthropic.com |
+| **Grok（xAI）** | `https://api.x.ai/v1` | `grok-2-latest` | console.x.ai |
 
 > **注意**：模型名称和接口地址会经常变动，请以各提供商官方文档为准。「名称」字段只是你起的标签，不影响实际调用哪个接口。
 

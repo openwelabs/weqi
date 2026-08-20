@@ -158,6 +158,8 @@ AI와 대국하려면 먼저 «설정 → AI Providers»에서 AI 제공업체�
 | **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
 | **Kimi (Moonshot)** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
 | **Mimo (Xiaomi)** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+| **Claude (Anthropic)** | `https://api.anthropic.com/v1` | `claude-sonnet-4-20250514` | console.anthropic.com |
+| **Grok (xAI)** | `https://api.x.ai/v1` | `grok-2-latest` | console.x.ai |
 
 > **참고**: 모델 이름과 엔드포인트는 자주 변경됩니다. 최신 모델 ID와 Base URL은 각 제공업체의 공식 문서를 확인하세요. «이름» 필드는 직접 정하는 라벨일 뿐이며 실제 호출되는 API에는 영향을 주지 않습니다.
 

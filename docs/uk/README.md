@@ -158,6 +158,8 @@ dist/
 | **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
 | **Kimi (Moonshot)** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
 | **Mimo (Xiaomi)** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+| **Claude (Anthropic)** | `https://api.anthropic.com/v1` | `claude-sonnet-4-20250514` | console.anthropic.com |
+| **Grok (xAI)** | `https://api.x.ai/v1` | `grok-2-latest` | console.x.ai |
 
 > **Примітка:** Назви моделей і кінцеві точки часто змінюються. Завжди перевіряйте офіційну документацію постачальника щодо актуального ID моделі та Base URL. Поле «Назва» — це лише мітка на ваш вибір, воно не впливає на те, який API викликається.
 
