@@ -131,6 +131,36 @@ The binary locates `ai_adapter/main.py` relative to the executable, or at `/usr/
 - **AI vs AI**: choose two AI providers, then use Start / Pause / Resume / Stop to control the automatic match.
 - **Change language**: open Settings → Language and pick one of the 7 supported languages (or "Follow System").
 
+## Adding an AI Model
+
+To play against an AI, you first need to add an AI provider in **Settings → AI Providers**. Each provider has 5 fields:
+
+| Field | What to fill in |
+| --- | --- |
+| **名称 / Name** | A display name you choose, e.g. `DeepSeek`, `Qwen`, `豆包`. |
+| **提供商类型 / Provider type** | All models below use OpenAI-compatible APIs, so fill in `OpenAI Compatible`. |
+| **Base URL** | The API endpoint of the provider (see table below). |
+| **API Key** | Your private API key from the provider's console. It is stored only in your local user-data directory, never in the project. |
+| **模型 / Model** | The exact model name (see table below). |
+
+### Recommended settings for common providers
+
+All of the following providers expose an OpenAI-compatible endpoint, so set **提供商类型 / Provider type** to `OpenAI Compatible` for every one of them.
+
+| Provider | Base URL | Model (example) | Where to get the API key |
+| --- | --- | --- | --- |
+| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | platform.deepseek.com |
+| **Qwen (通义千问)** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` | bailian.console.aliyun.com |
+| **豆包 (Doubao)** | `https://ark.cn-beijing.volces.com/api/v3` | `doubao-1-5-pro-32k-250115` | console.volcengine.com/ark |
+| **ChatGPT (OpenAI)** | `https://api.openai.com/v1` | `gpt-4o` | platform.openai.com |
+| **元宝 (Tencent Hunyuan)** | `https://api.hunyuan.cloud.tencent.com/v1` | `hunyuan-turbo` | console.cloud.tencent.com/hunyuan |
+| **Gemini (Google)** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | aistudio.google.com |
+| **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
+| **Kimi (Moonshot)** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
+| **Mimo (小米)** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+
+> **Note:** Model names and endpoints change frequently. Always check the provider's official documentation for the latest model ID and base URL. The "Name" field is just a label you choose — it does not affect which API is called.
+
 ## Data Storage
 
 - **Settings & profile**: stored in the system user-data directory (e.g. `~/.local/share/Weqi/` on Linux).

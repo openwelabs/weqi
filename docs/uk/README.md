@@ -131,6 +131,36 @@ dist/
 - **ШІ проти ШІ**: оберіть двох постачальників ШІ та використовуйте «Почати / Пауза / Продовжити / Стоп» для керування автоматичною партією.
 - **Зміна мови**: відкрийте «Налаштування → Мова» та оберіть одну з 7 підтримуваних мов (або «Слідувати за системою»).
 
+## Додавання моделі ШІ
+
+Щоб грати проти ШІ, спочатку потрібно додати постачальника ШІ в **Налаштування → AI Providers**. Кожен постачальник має 5 полів:
+
+| Поле | Що заповнити |
+| --- | --- |
+| **Назва** | Відображувана назва на ваш вибір, напр. `DeepSeek`, `Qwen`, `豆包`. |
+| **Тип постачальника** | Усі моделі нижче використовують API, сумісні з OpenAI, тому впишіть `OpenAI Compatible`. |
+| **Base URL** | Кінцева точка API постачальника (див. таблицю нижче). |
+| **API Key** | Ваш приватний ключ API з консолі постачальника. Зберігається лише у вашому локальному каталозі даних користувача, ніколи в проєкті. |
+| **Модель** | Точна назва моделі (див. таблицю нижче). |
+
+### Рекомендовані налаштування для популярних постачальників
+
+Усі постачальники нижче надають кінцеву точку, сумісну з OpenAI, тому для кожного встановіть **Тип постачальника** = `OpenAI Compatible`.
+
+| Постачальник | Base URL | Модель (приклад) | Де отримати API Key |
+| --- | --- | --- | --- |
+| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | platform.deepseek.com |
+| **Qwen (通义千问)** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` | bailian.console.aliyun.com |
+| **豆包 (Doubao)** | `https://ark.cn-beijing.volces.com/api/v3` | `doubao-1-5-pro-32k-250115` | console.volcengine.com/ark |
+| **ChatGPT (OpenAI)** | `https://api.openai.com/v1` | `gpt-4o` | platform.openai.com |
+| **元宝 (Tencent Hunyuan)** | `https://api.hunyuan.cloud.tencent.com/v1` | `hunyuan-turbo` | console.cloud.tencent.com/hunyuan |
+| **Gemini (Google)** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | aistudio.google.com |
+| **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
+| **Kimi (Moonshot)** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
+| **Mimo (Xiaomi)** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+
+> **Примітка:** Назви моделей і кінцеві точки часто змінюються. Завжди перевіряйте офіційну документацію постачальника щодо актуального ID моделі та Base URL. Поле «Назва» — це лише мітка на ваш вибір, воно не впливає на те, який API викликається.
+
 ## Зберігання даних
 
 - **Налаштування та профіль**: зберігаються в каталозі даних користувача системи (наприклад, `~/.local/share/Weqi/` у Linux).

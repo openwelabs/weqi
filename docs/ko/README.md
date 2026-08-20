@@ -131,6 +131,36 @@ dist/
 - **AI 대 AI**: 두 AI 제공업체를 선택하고 «시작 / 일시정지 / 재개 / 중지»로 자동 대국을 제어합니다.
 - **언어 변경**: «설정 → 언어»를 열고 지원되는 7개 언어 중 하나를 선택합니다 (또는 «시스템 따르기»).
 
+## AI 모델 추가
+
+AI와 대국하려면 먼저 «설정 → AI Providers»에서 AI 제공업체를 추가해야 합니다. 각 제공업체에는 5개의 필드가 있습니다:
+
+| 필드 | 입력 내용 |
+| --- | --- |
+| **이름** | 직접 정하는 표시 이름. 예: `DeepSeek`, `Qwen`, `豆包`. |
+| **제공업체 유형** | 아래 모델들은 모두 OpenAI 호환 API를 사용하므로 `OpenAI Compatible`을 입력합니다. |
+| **Base URL** | 제공업체의 API 엔드포인트 (아래 표 참조). |
+| **API Key** | 제공업체 콘솔에서 발급한 비밀 키. 로컬 사용자 데이터 디렉터리에만 저장되며 프로젝트에는 기록되지 않습니다. |
+| **모델** | 정확한 모델 이름 (아래 표 참조). |
+
+### 주요 모델 권장 설정
+
+아래 제공업체들은 모두 OpenAI 호환 엔드포인트를 제공하므로 «제공업체 유형»은 모두 `OpenAI Compatible`을 입력합니다.
+
+| 제공업체 | Base URL | 모델 (예시) | API Key 발급처 |
+| --- | --- | --- | --- |
+| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | platform.deepseek.com |
+| **Qwen (통의천문)** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` | bailian.console.aliyun.com |
+| **豆包 (Doubao)** | `https://ark.cn-beijing.volces.com/api/v3` | `doubao-1-5-pro-32k-250115` | console.volcengine.com/ark |
+| **ChatGPT (OpenAI)** | `https://api.openai.com/v1` | `gpt-4o` | platform.openai.com |
+| **元宝 (Tencent Hunyuan)** | `https://api.hunyuan.cloud.tencent.com/v1` | `hunyuan-turbo` | console.cloud.tencent.com/hunyuan |
+| **Gemini (Google)** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | aistudio.google.com |
+| **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
+| **Kimi (Moonshot)** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
+| **Mimo (Xiaomi)** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+
+> **참고**: 모델 이름과 엔드포인트는 자주 변경됩니다. 최신 모델 ID와 Base URL은 각 제공업체의 공식 문서를 확인하세요. «이름» 필드는 직접 정하는 라벨일 뿐이며 실제 호출되는 API에는 영향을 주지 않습니다.
+
 ## 데이터 저장
 
 - **설정 및 프로필**: 시스템 사용자 데이터 디렉터리에 저장 (Linux에서는 `~/.local/share/Weqi/` 등).

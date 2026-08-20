@@ -131,6 +131,36 @@ dist/
 - **AI 対局**：2 つの AI プロバイダーを選択し、「開始 / 一時停止 / 再開 / 停止」で自動対局を制御します。
 - **言語の切り替え**：「設定 → 言語」を開き、7 つの対応言語のいずれかを選択します（または「システムに従う」）。
 
+## AI モデルの追加
+
+AI と対局するには、まず「設定 → AI Providers」で AI プロバイダーを追加します。各プロバイダーには 5 つの項目があります：
+
+| 項目 | 入力内容 |
+| --- | --- |
+| **名称** | 自分で決める表示名。例：`DeepSeek`、`Qwen`、`豆包`。 |
+| **提供商類型（プロバイダー種別）** | 下記のモデルはすべて OpenAI 互換 API を使用するため、`OpenAI Compatible` と入力します。 |
+| **Base URL** | プロバイダーの API エンドポイント（下表参照）。 |
+| **API Key** | プロバイダーのコンソールで発行した秘密キー。ローカルのユーザーデータディレクトリにのみ保存され、プロジェクトには書き込まれません。 |
+| **模型（モデル）** | 正確なモデル名（下表参照）。 |
+
+### 主要モデルの推奨設定
+
+下記のプロバイダーはすべて OpenAI 互換エンドポイントを提供しているため、「プロバイダー種別」はすべて `OpenAI Compatible` と入力します。
+
+| プロバイダー | Base URL | モデル（例） | API Key の発行場所 |
+| --- | --- | --- | --- |
+| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | platform.deepseek.com |
+| **Qwen（通義千問）** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` | bailian.console.aliyun.com |
+| **豆包（Doubao）** | `https://ark.cn-beijing.volces.com/api/v3` | `doubao-1-5-pro-32k-250115` | console.volcengine.com/ark |
+| **ChatGPT（OpenAI）** | `https://api.openai.com/v1` | `gpt-4o` | platform.openai.com |
+| **元宝（Tencent Hunyuan）** | `https://api.hunyuan.cloud.tencent.com/v1` | `hunyuan-turbo` | console.cloud.tencent.com/hunyuan |
+| **Gemini（Google）** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | aistudio.google.com |
+| **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
+| **Kimi（Moonshot）** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
+| **Mimo（Xiaomi）** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+
+> **注意**：モデル名やエンドポイントは頻繁に変更されます。最新のモデル ID と Base URL は各プロバイダーの公式ドキュメントを確認してください。「名称」は自分で付けるラベルに過ぎず、実際に呼び出す API には影響しません。
+
 ## データ保存
 
 - **設定とプロフィール**：システムのユーザーデータディレクトリに保存（Linux では `~/.local/share/Weqi/` など）。

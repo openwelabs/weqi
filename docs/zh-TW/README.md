@@ -131,6 +131,36 @@ dist/
 - **AI 對戰**：選擇兩個 AI 提供商，使用「開始 / 暫停 / 繼續 / 停止」控制自動對局。
 - **切換語言**：開啟「設定 → 語言」，選擇 7 種支援的語言之一（或「跟隨系統」）。
 
+## 新增 AI 模型
+
+要跟 AI 對弈，需要先在「設定 → AI Providers」中新增一個 AI 提供商。每個提供商有 5 個欄位：
+
+| 欄位 | 填寫內容 |
+| --- | --- |
+| **名稱** | 你自己取的顯示名稱，例如 `DeepSeek`、`Qwen`、`豆包`。 |
+| **提供商類型** | 下面這些模型都使用 OpenAI 相容介面，統一填 `OpenAI Compatible`。 |
+| **Base URL** | 提供商的 API 位址（見下表）。 |
+| **API Key** | 你在提供商控制台申請的私密金鑰，只保存在本地使用者資料目錄，不會寫入專案。 |
+| **模型** | 精確的模型名稱（見下表）。 |
+
+### 常見模型推薦設定
+
+下面這些提供商都提供 OpenAI 相容介面，所以「提供商類型」全部填 `OpenAI Compatible`。
+
+| 提供商 | Base URL | 模型（範例） | 申請 API Key 的地方 |
+| --- | --- | --- | --- |
+| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | platform.deepseek.com |
+| **Qwen（通義千問）** | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` | bailian.console.aliyun.com |
+| **豆包（Doubao）** | `https://ark.cn-beijing.volces.com/api/v3` | `doubao-1-5-pro-32k-250115` | console.volcengine.com/ark |
+| **ChatGPT（OpenAI）** | `https://api.openai.com/v1` | `gpt-4o` | platform.openai.com |
+| **元寶（騰訊混元）** | `https://api.hunyuan.cloud.tencent.com/v1` | `hunyuan-turbo` | console.cloud.tencent.com/hunyuan |
+| **Gemini（Google）** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | aistudio.google.com |
+| **MiniMax** | `https://api.minimax.chat/v1` | `MiniMax-Text-01` | platform.minimaxi.com |
+| **Kimi（月之暗面）** | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` | platform.moonshot.cn |
+| **Mimo（小米）** | `https://api.mimo.ai/v1` | `mimo-1` | platform.mimo.ai |
+
+> **注意**：模型名稱和介面位址會經常變動，請以各提供商官方文件為準。「名稱」欄位只是你取的標籤，不影響實際呼叫哪個介面。
+
 ## 資料儲存
 
 - **設定與資料**：儲存在系統使用者資料目錄（Linux 下如 `~/.local/share/Weqi/`）。
